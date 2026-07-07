@@ -2,7 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import { ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Share2, Check } from "lucide-react"
 import { PlatHostContext, isSaveConflict, notifyError, usePlatHost } from "./host"
-import type { PlatHost, PlatHandle } from "./host"
+import type { PlatHost } from "./host"
+import { PlatApi, PlatApiContext, usePlatApi } from "./api"
 import { MeasureDataContext, MeasureDataStore } from "./measureData"
 import {
   PlatStore,
@@ -52,7 +53,17 @@ import {
 } from "./geometry"
 import { flowChildren } from "./layout"
 import { flowIndex } from "./layoutCommands"
-import { NODE_RENDERERS } from "./nodes"
+import { BUILTIN_NODE_TYPES } from "./nodes"
+import {
+  NodeTypeRegistryContext,
+  UnknownNodeContent,
+  buildRegistry,
+  getBehaviors,
+  interactiveScrollTarget,
+  isInteractiveTarget,
+  useNodeTypeRegistry,
+} from "./nodeTypes"
+import type { PlatNodeType } from "./nodeTypes"
 import { ArrowLayer } from "./nodes/ArrowLayer"
 import {
   isArrow,
@@ -91,9 +102,12 @@ interface Props {
    *  Tokens only — node CONTENT colors are document data and don't re-theme.
    *  Hosts can also override any --plat-* custom property. */
   theme?: "light" | "dark" | "auto"
+  /** Host-defined node types (definePlatNodeType). Content types only —
+   *  structural types (group/frame/arrow) are engine-owned. See NODES.md. */
+  nodeTypes?: PlatNodeType[]
   /** Receives the imperative handle once the canvas is mounted — how outside
    *  chrome (panels, refresh buttons) talks to the canvas. */
-  onReady?: (handle: PlatHandle) => void
+  onReady?: (api: PlatApi) => void
 }
 
 export function Plat({
@@ -102,6 +116,7 @@ export function Plat({
   renderMeasureCreate,
   newMeasureLabel,
   theme = "light",
+  nodeTypes,
   onReady,
 }: Props) {
   const effReadOnly = readOnly || !host.saveDoc
@@ -114,6 +129,9 @@ export function Plat({
     return s
   })
   const [measureStore] = useState(() => new MeasureDataStore(host.measures))
+  const registry = useMemo(() => buildRegistry(BUILTIN_NODE_TYPES, nodeTypes), [nodeTypes])
+  const [api] = useState(() => new PlatApi(store, measureStore, registry))
+  useEffect(() => api._setRegistry(registry), [api, registry])
   const [ready, setReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
@@ -277,6 +295,8 @@ export function Plat({
   return (
     <PlatHostContext.Provider value={host}>
       <MeasureDataContext.Provider value={measureStore}>
+        <NodeTypeRegistryContext.Provider value={registry}>
+        <PlatApiContext.Provider value={api}>
         <PlatStoreContext.Provider value={store}>
           <PlatInner
             readOnly={effReadOnly}
@@ -284,11 +304,12 @@ export function Plat({
             newMeasureLabel={newMeasureLabel}
             theme={theme}
             onReady={onReady}
-            measureStore={measureStore}
             conflict={conflict}
             onReloadFromHost={() => void reloadFromHost()}
           />
         </PlatStoreContext.Provider>
+        </PlatApiContext.Provider>
+        </NodeTypeRegistryContext.Provider>
       </MeasureDataContext.Provider>
     </PlatHostContext.Provider>
   )
@@ -333,7 +354,6 @@ function PlatInner({
   renderMeasureCreate,
   newMeasureLabel,
   onReady,
-  measureStore,
   theme = "light",
   conflict = false,
   onReloadFromHost,
@@ -342,8 +362,7 @@ function PlatInner({
   renderMeasureCreate?: Props["renderMeasureCreate"]
   newMeasureLabel?: string
   theme?: "light" | "dark" | "auto"
-  onReady?: (handle: PlatHandle) => void
-  measureStore: MeasureDataStore
+  onReady?: (api: PlatApi) => void
   conflict?: boolean
   onReloadFromHost?: () => void
 }) {
@@ -473,6 +492,10 @@ function PlatInner({
     if (!el) return
     let raf = 0
     const onWheel = (e: WheelEvent) => {
+      // Interactive-content protocol: if a scrollable element inside a
+      // [data-plat-interactive] region can consume this wheel, let it scroll
+      // natively instead of zoom/panning the canvas.
+      if (!e.ctrlKey && !e.metaKey && interactiveScrollTarget(e.target, e.deltaY)) return
       e.preventDefault()
       const r = el.getBoundingClientRect()
       const cur = toContainerPoint(e.clientX, e.clientY, r)
@@ -619,6 +642,20 @@ function PlatInner({
         gestureRef.current = { kind: "pan", lastClient: { x: e.clientX, y: e.clientY } }
         setPanning(true)
         containerRef.current?.setPointerCapture(e.pointerId)
+      }
+      return
+    }
+    // Interactive-content protocol: a pointerdown inside a [data-plat-interactive]
+    // region belongs to the content (text selection, buttons, inputs). Select the
+    // owning node so selection follows attention, but start NO canvas gesture and
+    // do NOT preventDefault (native selection/focus must proceed). NODES.md.
+    if (isInteractiveTarget(e.target)) {
+      setMenu(null)
+      const owner = (e.target as Element).closest("[data-node-id]")
+      const ownerId = owner?.getAttribute("data-node-id")
+      if (ownerId && store.getState().nodes[ownerId]) {
+        const t = selectionTarget(ownerId)
+        if (!store.getState().selectedIds.includes(t)) store.setSelection([t])
       }
       return
     }
@@ -817,9 +854,13 @@ function PlatInner({
       return
     }
     if (g.kind === "resize") {
+      const singleMin =
+        g.items.length === 1
+          ? getBehaviors(registryForSel, (store.getState().nodes[g.items[0].id] as BoxNode)?.type ?? "").minSize
+          : undefined
       const nb = resizeBox(g.initBounds, g.handle, page, {
         aspect: g.aspect || e.shiftKey,
-        minSize: MIN_SIZE,
+        minSize: singleMin ?? MIN_SIZE,
       })
       const sx = g.initBounds.w ? nb.w / g.initBounds.w : 1
       const sy = g.initBounds.h ? nb.h / g.initBounds.h : 1
@@ -1111,6 +1152,10 @@ function PlatInner({
       const tgt = e.target as HTMLElement | null
       if (tgt && (/^(input|textarea|select)$/i.test(tgt.tagName) || tgt.isContentEditable))
         return
+      // Interactive-content protocol: while focus lives inside an interactive
+      // region (custom node inputs/toolbars), canvas shortcuts stand down.
+      const active = document.activeElement
+      if (active && active !== document.body && isInteractiveTarget(active)) return
       if (e.key === " ") {
         spaceRef.current = true
         setSpaceHeld(true)
@@ -1395,18 +1440,13 @@ function PlatInner({
       160,
     )
   }
-  // Hand the imperative surface to the host — panels and refresh buttons that
-  // live outside this tree talk to the mounted canvas through it. Methods read
-  // the latest closures via ref so the handle itself stays stable.
-  const handleFnsRef = useRef({ insertMeasure, fitView })
-  handleFnsRef.current = { insertMeasure, fitView }
+  // Attach the viewport to the runtime api, then hand the api to the host —
+  // panels and outside chrome talk to the mounted canvas through it.
+  const api = usePlatApi()
   useEffect(() => {
-    onReady?.({
-      insertMeasure: (id) => handleFnsRef.current.insertMeasure(id),
-      refetchMeasures: () => measureStore.refetchAll(),
-      zoomToFit: () => handleFnsRef.current.fitView(),
-    })
-  }, [onReady, measureStore])
+    api._attach({ getRect: () => containerRef.current?.getBoundingClientRect() ?? null })
+    onReady?.(api)
+  }, [api, onReady])
   const cut = () => {
     copy()
     const sel = withGroupMembers(store.getState().selectedIds)
@@ -1430,7 +1470,15 @@ function PlatInner({
       .map((n) => nodeBox(n as AnyNode, byId))
     return unionBoxes(boxes)
   }, [selectedIds, nodes, byId])
-  const resizableSel = selectedIds.some((id) => nodes[id] && !isArrow(nodes[id]))
+  const registryForSel = useNodeTypeRegistry()
+  // single-selection behaviors: a node type may opt out of resize entirely or
+  // limit it to width (autoHeight — content owns the height).
+  const singleSel = selectedIds.length === 1 ? nodes[selectedIds[0]] : null
+  const singleBehaviors =
+    singleSel && !isArrow(singleSel) ? getBehaviors(registryForSel, singleSel.type) : null
+  const resizableSel =
+    selectedIds.some((id) => nodes[id] && !isArrow(nodes[id])) &&
+    singleBehaviors?.resizable !== false
   const singleArrowSelected =
     selectedIds.length === 1 && nodes[selectedIds[0]]?.type === "arrow"
 
@@ -1565,6 +1613,7 @@ function PlatInner({
               bounds={selectionBounds}
               zoom={camera.z}
               resizable={resizableSel}
+              widthOnly={!!singleBehaviors?.autoHeight}
               onResizeStart={(h, e) => startResize(h, e)}
             />
           )}
@@ -1854,13 +1903,36 @@ function NodeBox({
   ctx: NodeRenderCtx
 }) {
   const store = useStore()
-  const Content = NODE_RENDERERS[n.type]
+  const registry = useNodeTypeRegistry()
+  const def = registry.get(n.type)
+  const Content = def?.render ?? UnknownNodeContent
+  const autoHeight = !!def?.behaviors?.autoHeight
+  // autoHeight: content renders height-auto inside the box; keep n.h in sync
+  // with the measured content (ephemeral patches — sizing isn't an undo step).
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!autoHeight || typeof ResizeObserver === "undefined") return
+    const el = contentRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      const target = Math.max(MIN_SIZE, Math.round(el.offsetHeight))
+      const cur = store.getState().nodes[n.id]
+      if (cur && !isArrow(cur) && Math.abs(cur.h - target) > 0.5) {
+        store.patchNodes([{ id: n.id, patch: { h: target } }])
+        store.reconcile()
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [autoHeight, n.id, store])
   return (
     <div
       data-node-id={n.id}
-      style={{ position: "absolute", left, top, width: n.w, height: n.h }}
+      style={{ position: "absolute", left, top, width: n.w, height: autoHeight ? undefined : n.h }}
     >
-      {Content ? <Content node={n} readOnly={ctx.readOnly} /> : null}
+      <div ref={contentRef} style={autoHeight ? undefined : { width: "100%", height: "100%" }}>
+        <Content node={n} readOnly={ctx.readOnly} />
+      </div>
       {ctx.editingId === n.id && n.type === "text" ? (
         <TextEditor
           node={n}
@@ -2079,14 +2151,18 @@ function SelectionOverlay({
   bounds,
   zoom,
   resizable,
+  widthOnly = false,
   onResizeStart,
 }: {
   bounds: Box
   zoom: number
   resizable: boolean
+  /** autoHeight nodes: content owns height — only e/w handles show. */
+  widthOnly?: boolean
   onResizeStart: (h: ResizeHandle, e: React.PointerEvent) => void
 }) {
   const hs = 8 / zoom
+  const handles = widthOnly ? HANDLES.filter((h) => h.h === "e" || h.h === "w") : HANDLES
   return (
     <div
       style={{
@@ -2100,7 +2176,7 @@ function SelectionOverlay({
       }}
     >
       {resizable &&
-        HANDLES.map((handle) => (
+        handles.map((handle) => (
           <div
             key={handle.h}
             onPointerDown={(e) => onResizeStart(handle.h, e)}

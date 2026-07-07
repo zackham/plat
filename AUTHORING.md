@@ -35,7 +35,8 @@ The general loop:
 | `link` | `url`, `label?` — clickable pill |
 | `frame` | `name`, optional `layout` → titled, bordered, clipping container |
 | `group` | invisible container; add `layout` for chrome-less layout scaffolding |
-| `arrow` | `start`/`end` endpoints; `binding.nodeId` makes an endpoint follow a node |
+| `arrow` | `start`/`end` endpoints; `binding.nodeId` makes an endpoint follow a node; `kind:"curve"` + `arrowhead:"none"` for tree links |
+| `yourapp.*` | any dotted type = a custom node: `props` is an opaque bag owned by the host's registered type (NODES.md) — write it like any box |
 
 Ids: any unique string (`"n_" + random` is the editor's convention).
 

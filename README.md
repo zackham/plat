@@ -44,6 +44,19 @@ A read-only public share viewer and the full editor are the same component
 with different hosts. The boundary is enforced mechanically by
 [`src/__tests__/boundary.test.ts`](./src/__tests__/boundary.test.ts).
 
+## Bring your own nodes
+
+The content layer is open: register a **custom node type** — a chat, a
+markdown document, a chart — and the engine gives it drag, resize, snapping,
+arrows, auto-layout, undo, and persistence for free. Interactive content
+(text selection, scrolling, inputs) coexists with canvas gestures via one
+marker (`platInteractive`), and the **runtime api** lets your app or the node
+itself create/connect/stream/zoom programmatically. See
+[`NODES.md`](./NODES.md), and
+[`examples/rabbithole-lite`](./examples/rabbithole-lite) — a working
+rabbithole-style "select text → branch → answer streams into a linked card"
+app in ~350 lines of host code.
+
 ## Measures
 
 The distinctive piece. A measure node stores only an id; your app supplies
@@ -76,7 +89,8 @@ Hosts that don't care simply ignore the field — last-writer-wins, as before.
 
 | Doc | What it covers |
 |---|---|
-| [`EMBEDDING.md`](./EMBEDDING.md) | the `PlatHost` adapter contract + the measure data contract + revisions |
+| [`EMBEDDING.md`](./EMBEDDING.md) | the `PlatHost` adapter contract, the runtime api, measures, revisions |
+| [`NODES.md`](./NODES.md) | custom node types + the interactive-content protocol |
 | [`HOSTING.md`](./HOSTING.md) | build integration, styles/theming, and the gotchas |
 | [`AUTHORING.md`](./AUTHORING.md) | building plats programmatically (agents welcome) |
 | [`FORMAT.md`](./FORMAT.md) | the `plat` document format — the programmatic-authoring API |
@@ -85,12 +99,13 @@ Hosts that don't care simply ignore the field — last-writer-wins, as before.
 
 ## Example
 
-[`examples/basic`](./examples/basic) is a complete minimal host — a Vite app
-with a ~100-line `localStorage` adapter, fake measures, and a theme toggle:
+Two runnable hosts, each `npm install && npm run dev`:
 
-```
-cd examples/basic && npm install && npm run dev
-```
+- [`examples/basic`](./examples/basic) — minimal host: ~100-line
+  `localStorage` adapter, fake measures, theme toggle.
+- [`examples/rabbithole-lite`](./examples/rabbithole-lite) — the platform
+  showcase: a custom streaming-markdown document node, select-text→branch,
+  headless curve edges, camera tweens.
 
 ## Current state & caveats
 

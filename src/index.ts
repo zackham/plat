@@ -7,7 +7,6 @@ export { PlatSaveConflictError, isSaveConflict } from "./host"
 
 export type {
   PlatHost,
-  PlatHandle,
   MeasureData,
   MeasureResult,
   MeasureSource,
@@ -15,6 +14,15 @@ export type {
   SaveDocOptions,
   SaveDocResult,
 } from "./host"
+
+// Runtime controller — what onReady hands out, also reachable from custom
+// node renderers via usePlatApi(). PlatHandle is the compatibility alias.
+export { PlatApi, usePlatApi } from "./api"
+export type { PlatHandle, PlatNodeInit, ConnectOptions, ZoomToOptions, PlatApiEvent } from "./api"
+
+// Host-extensible node types + the interactive-content protocol (NODES.md).
+export { definePlatNodeType, platInteractive, PLAT_INTERACTIVE_ATTR } from "./nodeTypes"
+export type { PlatNodeType, PlatNodeBehaviors, PlatNodeRenderProps } from "./nodeTypes"
 
 export type {
   AnyNode,

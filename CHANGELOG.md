@@ -3,6 +3,60 @@
 Notable changes to plat. Format loosely follows [Keep a Changelog](https://keepachangelog.com);
 versions follow semver (pre-1.0: minor bumps may break).
 
+## [0.3.0] — 2026-07-06
+
+The platform release: the content layer opens up. plat now hosts node types
+it has never heard of — and gives your app a full runtime controller. The
+proof lives in `examples/rabbithole-lite`: a rabbithole-style
+"select text → branch → the answer streams into a linked card" app in ~350
+lines of host code, none of them canvas code.
+
+### Added
+
+- **Custom node types** (`definePlatNodeType` + the `nodeTypes` prop): a
+  renderer, `defaultProps`/`defaultSize`, and behaviors (`resizable`,
+  `minSize`, `autoHeight`) per type. Custom ids MUST be dotted
+  ("yourapp.card") — the namespace keeps TypeScript's node union fully
+  discriminated and shared docs collision-free. On disk a custom node is a
+  plain box with an opaque `props` bag; unregistered types render a legible
+  placeholder (degrade, never crash, never drop data). Built-in content types
+  (image/text/measure/link) are registered through this exact machinery —
+  measures are now "just a node type", extracted onto the public API.
+  Structural types (group/frame/arrow) remain engine-owned.
+- **The interactive-content protocol** (`platInteractive`): mark any region
+  inside a renderer that owns its own input. Pointerdown there never starts a
+  canvas gesture (native selection/focus/click proceed; the node still gets
+  selected), wheel scrolls the region while it can consume the delta, and
+  keyboard shortcuts stand down while focus is inside. "Drag by the header,
+  select text in the body" falls out naturally. MeasureNode's stopPropagation
+  hacks were replaced by the protocol (dogfood #1).
+- **`PlatApi` — the runtime controller** handed to `onReady` (PlatHandle is
+  now an alias) and reachable inside renderers via `usePlatApi()`:
+  `create`/`updateNode`/`updateProps`/`remove`/`connect`, `batch` (one undo
+  step), `beginEphemeral`/`endEphemeral` (a whole stream = ONE undo step),
+  selection get/set, camera get/set + tweened `zoomTo`/`zoomToFit`,
+  `clientToPage`/`pageToClient`, and `on("change"|"selection"|"camera")`
+  subscriptions. Everything routes through the editor's own commit/gesture
+  machinery, so api mutations are undoable exactly like user edits.
+- **`autoHeight` behavior**: content-driven node height (ResizeObserver →
+  ephemeral patches; never pollutes undo; single-selection resize offers e/w
+  handles only).
+- **Curve edges**: arrow `kind: "curve"` (soft cubic) + `arrowhead: "none"`
+  for tree-link styling.
+- **`examples/rabbithole-lite`** — the acceptance test for all of the above,
+  live-verified: custom streaming-markdown document node, branch-from-
+  selection with lenses, headless curve edges, camera glides, dark mode,
+  recursion, localStorage persistence with the revision protocol.
+- **NODES.md** (node types + interaction protocol) and a full runtime-api
+  section in EMBEDDING.md; FORMAT/AUTHORING/README updated. 14 new tests
+  (registry, fallback, protocol, api mutations/undo semantics/events/camera
+  math) — 128 total.
+
+### Changed
+
+- `Props.onReady` now receives the full `PlatApi` (superset of the old
+  three-method handle — existing hosts keep working unchanged).
+
 ## [0.2.0] — 2026-07-06
 
 The "ready for more hosts" release: styling stands alone, concurrent writers

@@ -105,15 +105,30 @@ A titled, bordered, **clipping** container. Members reference it via `parentId`.
 Without `layout` it's a free-form frame (members positioned manually). With
 `layout` it auto-arranges its flow children (§4).
 
-### 3.7 arrow
+### 3.7 custom nodes (host-defined types)
+```jsonc
+{ "id","type":"yourapp.card","x","y","w","h","index","parentId"?,
+  "props": { /* opaque — owned by the registered node type */ } }
+```
+Any `type` containing a dot is a **custom node**: a normal box (drag/resize/
+snap/group/arrows/auto-layout all apply) whose rendering and `props` semantics
+belong to a host-registered node type (NODES.md). Viewers without the type
+registered render a labeled placeholder; the node and its props survive
+round-trips untouched. Built-in literals never contain dots, which is what
+keeps the format's type field unambiguous.
+
+### 3.8 arrow
 ```jsonc
 { "id","type":"arrow","index","parentId"?,
   "start": { "x","y", "binding"?: { "nodeId","anchor":{x,y}∈[0,1], "isPrecise"? } | null },
   "end":   { "x","y", "binding"? | null },
-  "color"?: "#334155", "kind"?: "straight"|"elbow", "elbowMid"?: 0..1 }
+  "color"?: "#334155", "kind"?: "straight"|"elbow"|"curve", "elbowMid"?: 0..1,
+  "arrowhead"?: "end"|"none" }
 ```
 A **bound** endpoint (`binding.nodeId` set) follows that node; its `x/y` are
-ignored while bound. To keep an arrow attached when replacing a card with an image,
+ignored while bound. `kind:"curve"` renders a soft cubic between the
+endpoints and `arrowhead:"none"` drops the head — together they read as a
+tree link rather than an annotation arrow. To keep an arrow attached when replacing a card with an image,
 **reuse the card's node id**. Arrows are never auto-layout flow items.
 
 ---

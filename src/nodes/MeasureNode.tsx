@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { RefreshCw, AlertCircle, Minus, Plus, Info } from "lucide-react"
 import { useMeasureData, useMeasureStore } from "../measureData"
+import { platInteractive } from "../nodeTypes"
 import { formatValue, pickText, pickValue } from "../measureFormat"
 import { useStore } from "../store"
 import type { AnyNode, MeasureNode } from "../types"
@@ -35,7 +36,6 @@ export function MeasureContent({
   const note =
     typeof result?.["note"] === "string" ? (result["note"] as string) : null
 
-  const stop = (e: React.PointerEvent) => e.stopPropagation()
   const [showNote, setShowNote] = useState(false)
 
   return (
@@ -47,17 +47,13 @@ export function MeasureContent({
             <span>{m.data?.name ?? "…"}</span>
           </div>
           {!readOnly && (
-            <div className="plat-measure__controls">
+            <div className="plat-measure__controls" {...platInteractive}>
               <button
                 type="button"
                 className="plat-measure__ctl"
                 disabled={fontScale <= 0.6}
                 title="Smaller text"
-                onPointerDown={stop}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setFontScale(fontScale - 0.15)
-                }}
+                onClick={() => setFontScale(fontScale - 0.15)}
               >
                 <Minus size={12} />
               </button>
@@ -66,11 +62,7 @@ export function MeasureContent({
                 className="plat-measure__ctl"
                 disabled={fontScale >= 3}
                 title="Larger text"
-                onPointerDown={stop}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setFontScale(fontScale + 0.15)
-                }}
+                onClick={() => setFontScale(fontScale + 0.15)}
               >
                 <Plus size={12} />
               </button>
@@ -80,11 +72,7 @@ export function MeasureContent({
                   className="plat-measure__ctl"
                   disabled={m.refreshing}
                   title="Refresh measure"
-                  onPointerDown={stop}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void measures.refresh(node.measureId)
-                  }}
+                  onClick={() => void measures.refresh(node.measureId)}
                 >
                   <RefreshCw size={12} className={m.refreshing ? "plat-spin" : ""} />
                 </button>
@@ -124,15 +112,11 @@ export function MeasureContent({
           <span className="plat-measure__label">
             {!isText && typeof result?.["label"] === "string" ? (result["label"] as string) : ""}
           </span>
-          <div className="plat-measure__foot-actions">
+          <div className="plat-measure__foot-actions" {...platInteractive}>
             {note ? (
               <button
                 type="button"
-                onPointerDown={stop}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowNote((v) => !v)
-                }}
+                onClick={() => setShowNote((v) => !v)}
                 title="details"
                 className={`plat-measure__note-btn${showNote ? " plat-measure__note-btn--open" : ""}`}
               >
@@ -144,8 +128,6 @@ export function MeasureContent({
                 href={linkObj.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                onPointerDown={stop}
-                onClick={(e) => e.stopPropagation()}
                 title={linkObj.url}
                 className="plat-measure__link"
               >
@@ -157,11 +139,8 @@ export function MeasureContent({
       </div>
       {note && showNote ? (
         <div
-          onPointerDown={stop}
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowNote(false)
-          }}
+          {...platInteractive}
+          onClick={() => setShowNote(false)}
           className="plat-measure__note"
           title="click to close"
         >

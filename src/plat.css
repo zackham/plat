@@ -820,3 +820,29 @@
 .plat-pulse {
   animation: plat-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* ── unregistered node fallback ─────────────────────────── */
+
+.plat-unknown {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px dashed var(--plat-border);
+  border-radius: 0.5rem;
+  background: var(--plat-surface-muted);
+  color: var(--plat-text-faint);
+}
+.plat-unknown__type {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--plat-text-muted);
+}
+.plat-unknown__hint {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

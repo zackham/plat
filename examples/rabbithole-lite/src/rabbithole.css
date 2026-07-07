@@ -1,0 +1,138 @@
+/* App chrome + the document-card styling. Card colors ride plat's tokens so
+ * dark mode Just Works. */
+
+.rh-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+}
+.rh-header--dark {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-bottom-color: #334155;
+}
+.rh-header__sub {
+  opacity: 0.6;
+}
+
+.rh-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--plat-surface);
+  border: 1px solid var(--plat-border);
+  border-radius: 10px;
+  box-shadow: var(--plat-shadow-md);
+  overflow: hidden;
+}
+.rh-card--streaming {
+  border-color: var(--plat-accent-border);
+  box-shadow: 0 0 0 1px var(--plat-accent-border), var(--plat-shadow-md);
+}
+.rh-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--plat-text-secondary);
+}
+.rh-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--plat-accent);
+  animation: plat-pulse 1.2s ease-in-out infinite;
+}
+.rh-card__origin {
+  padding: 4px 14px 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--plat-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rh-card__body {
+  padding: 6px 14px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--plat-text);
+  max-height: 340px;
+  overflow-y: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.rh-card__body h1 {
+  font-size: 16px;
+  margin: 6px 0;
+}
+.rh-card__body p {
+  margin: 6px 0;
+}
+.rh-card__body ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.rh-card__body code {
+  background: var(--plat-surface-muted);
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.rh-card__body ::selection {
+  background: var(--plat-accent-soft);
+}
+
+.rh-ask {
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 10050;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--plat-surface, #fff);
+  border: 1px solid var(--plat-border, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: var(--plat-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+  font-size: 12px;
+}
+.rh-ask__lenses {
+  display: flex;
+  gap: 4px;
+}
+.rh-ask__lenses button {
+  border: 1px solid var(--plat-border, #e2e8f0);
+  background: none;
+  color: var(--plat-text-secondary, #475569);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rh-ask__lenses button:hover {
+  background: var(--plat-accent-soft, #eef2ff);
+  color: var(--plat-accent, #4f46e5);
+  border-color: var(--plat-accent-border, #c7d2fe);
+}
+.rh-ask input {
+  width: 240px;
+  border: 1px solid var(--plat-border, #e2e8f0);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--plat-surface, #fff);
+  color: var(--plat-text, #0f172a);
+  outline: none;
+}
+.rh-ask input:focus {
+  border-color: var(--plat-accent, #4f46e5);
+}

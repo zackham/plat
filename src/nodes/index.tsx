@@ -1,5 +1,5 @@
-import type { ComponentType } from "react"
 import type { AnyNode, ImageNode, TextNode, LinkNode } from "../types"
+import type { PlatNodeType } from "../nodeTypes"
 import { MeasureContent } from "./MeasureNode"
 
 export interface NodeContentProps {
@@ -111,12 +111,26 @@ function LinkContent({ node, readOnly }: NodeContentProps) {
   )
 }
 
-// Add a node type: implement a content component (fills 100% of its wrapper) and
-// register it here. Positioning/selection/resize are handled generically by Plat.
-export const NODE_RENDERERS: Record<string, ComponentType<NodeContentProps>> = {
-  image: ImageContent,
-  text: TextContent,
-  measure: MeasureContent,
-  link: LinkContent,
-  // group renders no content (invisible container); arrows render in ArrowLayer.
-}
+// Built-in content node types, registered through the SAME PlatNodeType
+// machinery hosts use for custom types (custom types are not second-class).
+// group/frame/arrow are structural — owned by the engine, not listed here.
+export const BUILTIN_NODE_TYPES: PlatNodeType[] = [
+  { type: "image", render: ImageContent, defaultSize: { w: 400, h: 300 } },
+  {
+    type: "text",
+    render: TextContent,
+    defaultProps: { text: "", fontSize: 16 },
+    defaultSize: { w: 240, h: 48 },
+  },
+  {
+    type: "measure",
+    render: MeasureContent,
+    defaultSize: { w: 240, h: 160 },
+  },
+  {
+    type: "link",
+    render: LinkContent,
+    defaultProps: { url: "", label: "" },
+    defaultSize: { w: 220, h: 36 },
+  },
+]

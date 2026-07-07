@@ -130,7 +130,7 @@ export interface ArrowEndpoint {
   binding?: ArrowBinding | null
 }
 
-export type ArrowKind = "straight" | "elbow"
+export type ArrowKind = "straight" | "elbow" | "curve"
 
 export interface ArrowNode {
   id: string
@@ -143,11 +143,38 @@ export interface ArrowNode {
   kind?: ArrowKind
   /** elbow mid-segment position along its range (0..1). */
   elbowMid?: number
+  /** "none" = connector styling (tree links) without an arrowhead. */
+  arrowhead?: "end" | "none"
 }
 
 export type ToolMode = "select" | "hand" | "arrow" | "text" | "frame"
 
-export type BoxNode = ImageNode | TextNode | MeasureNode | GroupNode | FrameNode | LinkNode
+/** Custom (host-defined) node type ids MUST be namespaced with a dot, e.g.
+ *  "rabbithole.document" or "acme.chat". The dot is what keeps the node union
+ *  discriminated for TypeScript (a dotted id can never collide with a built-in
+ *  literal like "frame") and keeps plugin ecosystems collision-free.
+ *  Registration: definePlatNodeType + the `nodeTypes` prop (see NODES.md). */
+export type CustomNodeTypeId = `${string}.${string}`
+
+/** A host-defined content node. The engine treats it as a plain box (drag,
+ *  resize, snap, group, arrows, layout all work); rendering and `props`
+ *  semantics belong to the registered node type. */
+export interface CustomNode extends BoxBase {
+  type: CustomNodeTypeId
+  props: Record<string, unknown>
+}
+
+export const isCustomNode = (n: AnyNode): n is CustomNode =>
+  n.type.includes(".")
+
+export type BoxNode =
+  | ImageNode
+  | TextNode
+  | MeasureNode
+  | GroupNode
+  | FrameNode
+  | LinkNode
+  | CustomNode
 export type AnyNode = BoxNode | ArrowNode
 
 export interface PlatDoc {

@@ -111,15 +111,41 @@ same-base saves can both pass. The protocol's job is stopping the
 *human-scale* clobber; make the check atomic if your host is truly
 multi-user-concurrent.
 
-## Imperative handle
+## The runtime api (PlatApi)
 
-`onReady` receives a `PlatHandle` for chrome that lives outside the
-canvas (side panels, refresh buttons):
+`onReady` hands out the full runtime controller (`PlatHandle` is its
+compatibility alias); `usePlatApi()` reaches the same object from inside
+custom node renderers. Everything routes through the editor's own
+commit/gesture machinery, so api mutations are undoable exactly like user
+edits.
 
-- `insertMeasure(measureId)` — drop a measure node at the viewport center
-- `refetchMeasures()` — re-fetch all cached measure data (call after the host
-  refreshes measures out-of-band)
-- `zoomToFit()`
+```ts
+// document
+api.getDoc(); api.getNode(id)
+api.create({ type, x, y, ...fields }, { select? })   // defaults from the node type
+api.updateNode(id, patch, { history? })              // history:false = ephemeral
+api.updateProps(id, partialProps, { history? })      // shallow-merge custom props
+api.remove(ids)
+api.connect(fromId, toId, { kind?, arrowhead?, fromAnchor?, toAnchor?, color? })
+api.batch(fn)                                        // several ops, one undo step
+api.beginEphemeral(); …history:false updates…; api.endEphemeral()
+                                                     // a whole stream = ONE undo step
+// selection & camera
+api.getSelection(); api.select(ids)
+api.getCamera(); api.setCamera(partial)
+await api.zoomTo(nodeIdOrBox, { animate?, padding?, maxZoom? })  // tweened
+api.zoomToFit(); api.clientToPage(p); api.pageToClient(p); api.viewportCenterPage()
+// events
+const off = api.on("change" | "selection" | "camera", cb)
+// measures
+api.insertMeasure(measureId); api.refetchMeasures()
+```
+
+The streaming pattern (LLM answers, live logs): `beginEphemeral()`, patch
+every chunk with `{history: false}`, `endEphemeral()` — the user sees text
+arrive live, and undo removes the whole answer in one step. One ephemeral
+session at a time (it shares the editor's gesture snapshot); keep streams
+short or serialize them.
 
 ## Host-specific UI slots
 

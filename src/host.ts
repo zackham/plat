@@ -107,15 +107,8 @@ export interface PlatHost {
   notify?(kind: "success" | "error", message: string): void
 }
 
-/** Imperative surface handed to the host via `onReady` — how surrounding
- *  chrome (panels, refresh buttons) talks to a mounted canvas. */
-export interface PlatHandle {
-  /** Drop a measure node at the viewport center. */
-  insertMeasure(measureId: string): void
-  /** Re-fetch every measure currently cached (call after host-side refreshes). */
-  refetchMeasures(): void
-  zoomToFit(): void
-}
+// The imperative surface handed to the host via `onReady` is the full runtime
+// controller — see api.ts (PlatApi; PlatHandle is its compatibility alias).
 
 export const PlatHostContext = createContext<PlatHost | null>(null)
 
