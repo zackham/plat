@@ -1,65 +1,95 @@
 # plat
 
-An embeddable infinite-canvas React library for presenting work: screenshots,
-text, arrows, frames with Figma-style auto-layout, and **measures** — live
-data values rendered as cards, fed by your application.
+**An embeddable infinite-canvas platform.** Bring your own node types — a
+markdown document, a chat, a live metric, anything you can render in React —
+and plat gives them drag, resize, zoom, snapping, bound edges, auto-layout,
+undo, and persistence for free. Your app keeps auth, storage, and compute;
+plat owns the canvas.
 
-A *plat* is a plan drawn to scale. This one is for laying out evidence:
-product flows annotated with real conversion numbers, experiment variants next
-to their results, agent-produced work arranged spatially instead of buried in
-prose.
+A *plat* is a plan drawn to scale. What goes on it is your call: agent-built
+work products, product flows annotated with live conversion numbers, a
+rabbithole of streaming answers, a KPI wall someone can rearrange.
 
-Built **programmatic-first**: the document format is plain JSON
-([`FORMAT.md`](./FORMAT.md)) that any process — including an AI agent — can
-emit, with a capable interactive editor on top.
+Three ideas carry the whole design:
 
-## The shape
+1. **One adapter in** — a `PlatHost` of plain promises is the only data
+   boundary. No fetches, no URLs, no framework assumptions inside the canvas.
+2. **Open content, owned structure** — content node types are pluggable
+   (built-ins ride the same registry as yours); groups, frames, and arrows
+   stay engine-owned so every node composes.
+3. **Programmatic-first** — the document is plain JSON any process or agent
+   can emit, and a runtime api (`create`/`connect`/`stream`/`zoomTo`…) drives
+   a live canvas the way a user would, undo included.
+
+## Sixty seconds
 
 ```tsx
-import { Plat, type PlatHost } from "plat"
+import { Plat, definePlatNodeType, platInteractive, usePlatApi } from "plat"
+import type { PlatHost } from "plat"
+import "plat/plat.css"
 
+// 1. your node type — plat has never heard of "notes.card"
+const noteType = definePlatNodeType({
+  type: "notes.card",
+  defaultSize: { w: 320, h: 120 },
+  behaviors: { autoHeight: true },
+  render: ({ node }) => {
+    const api = usePlatApi()
+    const { text } = node.props as { text: string }
+    return (
+      <div className="my-card">
+        <div {...platInteractive}>{text}</div>{/* selectable, scrollable */}
+        <button
+          {...platInteractive}
+          onClick={() => {
+            const [child] = api.create({ type: "notes.card", x: node.x + node.w + 120, y: node.y })
+            api.connect(node.id, child.id, { kind: "curve", arrowhead: "none" })
+            void api.zoomTo(child.id, { animate: 300 })
+          }}
+        >
+          branch
+        </button>
+      </div>
+    )
+  },
+})
+
+// 2. your storage — any backend, or just localStorage
 const host: PlatHost = {
-  loadDoc: async () => myBackend.loadDoc(canvasId),
-  saveDoc: async (doc) => myBackend.saveDoc(canvasId, doc),
-  uploadAsset: async (blob) => ({ src: await myBackend.storeBlob(blob) }),
-  measures: { get: async (id) => myBackend.measure(id) },
+  loadDoc: async () => myBackend.loadDoc(id),
+  saveDoc: async (doc) => myBackend.saveDoc(id, doc),
 }
 
-<Plat host={host} onReady={(handle) => { /* insertMeasure, refetchMeasures, zoomToFit */ }} />
+// 3. a canvas
+<Plat host={host} nodeTypes={[noteType]} />
 ```
 
-`Plat` renders and edits **one document**, and everything it needs arrives
-through that one `host` adapter — the library never fetches, never knows URLs,
-never handles auth or storage. Omit a capability and its UI disappears:
+The proof is [`examples/rabbithole-lite`](./examples/rabbithole-lite): a
+rabbithole-style "select text → branch → the answer streams into a linked
+card" app — recursion, camera glides, one-undo-step streams, dark mode — in
+~350 lines of host code, none of them canvas code. Details in
+[`NODES.md`](./NODES.md).
+
+## The host adapter
+
+`Plat` renders and edits **one document**; everything it needs arrives
+through the `host` — plain promises your app implements. Capabilities are
+optional; omit one and its UI disappears:
 
 | omitted | effect |
 |---|---|
 | `saveDoc` | view-only |
 | `uploadAsset` | no image insert / paste |
-| `measures.refresh` | no refresh button |
-| `measures.list` | no insert-measure picker |
+| `measures` / `measures.refresh` / `measures.list` | no live-data cards / refresh / picker |
 | `share` | no share button |
 
 A read-only public share viewer and the full editor are the same component
 with different hosts. The boundary is enforced mechanically by
 [`src/__tests__/boundary.test.ts`](./src/__tests__/boundary.test.ts).
 
-## Bring your own nodes
+## Measures — the flagship built-in
 
-The content layer is open: register a **custom node type** — a chat, a
-markdown document, a chart — and the engine gives it drag, resize, snapping,
-arrows, auto-layout, undo, and persistence for free. Interactive content
-(text selection, scrolling, inputs) coexists with canvas gestures via one
-marker (`platInteractive`), and the **runtime api** lets your app or the node
-itself create/connect/stream/zoom programmatically. See
-[`NODES.md`](./NODES.md), and
-[`examples/rabbithole-lite`](./examples/rabbithole-lite) — a working
-rabbithole-style "select text → branch → answer streams into a linked card"
-app in ~350 lines of host code.
-
-## Measures
-
-The distinctive piece. A measure node stores only an id; your app supplies
+Live data as canvas nodes. A measure node stores only an id; your app supplies
 `{name, latest: {result, error, refreshed_at}}` where `result` is an open dict
 with rendering conventions (`value`, `label`, `note`, `link`, text mode).
 *How* a measure is computed — a SQL query, an analytics API, a python script,
