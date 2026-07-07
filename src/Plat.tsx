@@ -636,7 +636,13 @@ function PlatInner({
     }
     if (readOnly) {
       // readonly: no selection/editing, but drag-to-pan so the canvas stays
-      // navigable. Left or middle button arms a pan; everything else is inert.
+      // navigable. A pointerdown inside a [data-plat-interactive] region belongs
+      // to the content (links, buttons, native scroll) — let it through instead
+      // of capturing it into a pan. Otherwise the container's pointer capture
+      // steals the pointerup and the element never receives a click, so e.g. a
+      // measure card's source link never opens. Mirrors the editor path (below).
+      if (isInteractiveTarget(e.target)) return
+      // Left or middle button arms a pan; everything else is inert.
       if (e.button === 0 || e.button === 1) {
         e.preventDefault()
         gestureRef.current = { kind: "pan", lastClient: { x: e.clientX, y: e.clientY } }

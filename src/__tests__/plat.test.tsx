@@ -4,7 +4,7 @@
 // error screen and NEVER autosave (treating a failed load as "empty canvas"
 // would clobber the stored doc on the next save).
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { Plat } from "../Plat"
 import { PlatSaveConflictError } from "../index"
@@ -116,6 +116,44 @@ describe("Plat + PlatHost", () => {
     expect(await screen.findByText("signup conversion")).toBeInTheDocument()
     expect(await screen.findByText("42.0%")).toBeInTheDocument()
     expect(screen.getByText("last 30d")).toBeInTheDocument()
+  })
+
+  it("readOnly: a pointerdown on interactive measure content (source link) is not captured into a pan", async () => {
+    // Regression: in readOnly the pan gesture used to arm on EVERY pointerdown,
+    // including inside a [data-plat-interactive] region. The container's pointer
+    // capture then stole the pointerup, so a measure's source link never got a
+    // click and never opened. Interactive content must be let through.
+    const measure: MeasureData = {
+      id: "m_link",
+      name: "with source link",
+      latest: {
+        result: { value: 1, label: "x", link: { url: "https://example.com/chart", label: "Amplitude" } },
+        error: null,
+        refreshed_at: "2026-07-06T00:00:00Z",
+      },
+    }
+    const doc: PlatDoc = {
+      format: "plat",
+      version: 1,
+      nodes: [{ id: "m1", type: "measure", x: 0, y: 0, w: 240, h: 160, index: "a0", measureId: "m_link" }],
+    }
+    const host: PlatHost = { loadDoc: async () => doc, measures: { get: async () => measure } }
+    const { container } = render(<Plat host={host} readOnly />)
+    const link = await screen.findByText(/Amplitude/)
+    expect(link.closest("a")).toHaveAttribute("href", "https://example.com/chart")
+
+    const viewport = container.querySelector(".plat-viewport") as HTMLElement
+    const capture = vi.fn()
+    viewport.setPointerCapture = capture
+
+    // pointerdown on the interactive link must NOT arm a pan (no pointer capture),
+    // so the browser's native click/navigation on the <a> survives.
+    fireEvent.pointerDown(link, { button: 0, pointerType: "mouse" })
+    expect(capture).not.toHaveBeenCalled()
+
+    // control: pointerdown on empty canvas DOES arm a pan (readOnly drag-to-pan).
+    fireEvent.pointerDown(viewport, { button: 0, pointerType: "mouse" })
+    expect(capture).toHaveBeenCalled()
   })
 
   it("onReady hands out a working handle (insertMeasure → saveDoc)", async () => {
