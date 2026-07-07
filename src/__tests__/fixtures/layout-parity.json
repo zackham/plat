@@ -1,0 +1,680 @@
+[
+ {
+  "name": "h_hug_row",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 1000,
+     "y": 500,
+     "w": 0,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 10,
+      "padding": {
+       "t": 8,
+       "r": 8,
+       "b": 8,
+       "l": 8
+      },
+      "justify": "start",
+      "align": "start",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     },
+     "name": "F"
+    },
+    {
+     "id": "A",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 100,
+     "h": 50,
+     "index": "a1",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "B",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 60,
+     "h": 80,
+     "index": "a2",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "C",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 40,
+     "h": 30,
+     "index": "a3",
+     "parentId": "F",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 1000,
+    "y": 500,
+    "w": 236,
+    "h": 96
+   },
+   "A": {
+    "x": 1008,
+    "y": 508,
+    "w": 100,
+    "h": 50
+   },
+   "B": {
+    "x": 1118,
+    "y": 508,
+    "w": 60,
+    "h": 80
+   },
+   "C": {
+    "x": 1188,
+    "y": 508,
+    "w": 40,
+    "h": 30
+   }
+  }
+ },
+ {
+  "name": "v_fixed_cross_center",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 0,
+     "y": 0,
+     "w": 400,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "v",
+      "gap": 10,
+      "padding": {
+       "t": 8,
+       "r": 8,
+       "b": 8,
+       "l": 8
+      },
+      "justify": "start",
+      "align": "center",
+      "sizing": {
+       "main": "hug",
+       "cross": "fixed"
+      }
+     },
+     "name": "F"
+    },
+    {
+     "id": "A",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 100,
+     "h": 50,
+     "index": "a1",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "B",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 60,
+     "h": 80,
+     "index": "a2",
+     "parentId": "F",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 0,
+    "y": 0,
+    "w": 400,
+    "h": 156
+   },
+   "A": {
+    "x": 150.0,
+    "y": 8,
+    "w": 100,
+    "h": 50
+   },
+   "B": {
+    "x": 170.0,
+    "y": 68,
+    "w": 60,
+    "h": 80
+   }
+  }
+ },
+ {
+  "name": "fixed_main_space_between",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 50,
+     "y": 50,
+     "w": 600,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 10,
+      "padding": {
+       "t": 8,
+       "r": 8,
+       "b": 8,
+       "l": 8
+      },
+      "justify": "space-between",
+      "align": "start",
+      "sizing": {
+       "main": "fixed",
+       "cross": "hug"
+      }
+     },
+     "name": "F"
+    },
+    {
+     "id": "A",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 100,
+     "h": 50,
+     "index": "a1",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "B",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 60,
+     "h": 80,
+     "index": "a2",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "C",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 40,
+     "h": 30,
+     "index": "a3",
+     "parentId": "F",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 50,
+    "y": 50,
+    "w": 600,
+    "h": 96
+   },
+   "A": {
+    "x": 58,
+    "y": 58,
+    "w": 100,
+    "h": 50
+   },
+   "B": {
+    "x": 350.0,
+    "y": 58,
+    "w": 60,
+    "h": 80
+   },
+   "C": {
+    "x": 602.0,
+    "y": 58,
+    "w": 40,
+    "h": 30
+   }
+  }
+ },
+ {
+  "name": "nested_row_of_columns",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "row",
+     "type": "frame",
+     "x": 0,
+     "y": 0,
+     "w": 0,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 40,
+      "padding": {
+       "t": 0,
+       "r": 0,
+       "b": 0,
+       "l": 0
+      },
+      "justify": "start",
+      "align": "start",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     },
+     "name": "row"
+    },
+    {
+     "id": "colA",
+     "type": "group",
+     "x": 0,
+     "y": 0,
+     "w": 0,
+     "h": 0,
+     "index": "a0",
+     "parentId": "row",
+     "layout": {
+      "dir": "v",
+      "gap": 8,
+      "padding": {
+       "t": 0,
+       "r": 0,
+       "b": 0,
+       "l": 0
+      },
+      "justify": "start",
+      "align": "center",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     }
+    },
+    {
+     "id": "imgA",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 300,
+     "h": 650,
+     "index": "a0",
+     "parentId": "colA",
+     "src": ""
+    },
+    {
+     "id": "capA",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 300,
+     "h": 40,
+     "index": "a1",
+     "parentId": "colA",
+     "src": ""
+    },
+    {
+     "id": "colB",
+     "type": "group",
+     "x": 0,
+     "y": 0,
+     "w": 0,
+     "h": 0,
+     "index": "a1",
+     "parentId": "row",
+     "layout": {
+      "dir": "v",
+      "gap": 8,
+      "padding": {
+       "t": 0,
+       "r": 0,
+       "b": 0,
+       "l": 0
+      },
+      "justify": "start",
+      "align": "center",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     }
+    },
+    {
+     "id": "imgB",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 280,
+     "h": 650,
+     "index": "a0",
+     "parentId": "colB",
+     "src": ""
+    },
+    {
+     "id": "capB",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 280,
+     "h": 40,
+     "index": "a1",
+     "parentId": "colB",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "row": {
+    "x": 0,
+    "y": 0,
+    "w": 620,
+    "h": 698
+   },
+   "colA": {
+    "x": 0,
+    "y": 0,
+    "w": 300,
+    "h": 698
+   },
+   "imgA": {
+    "x": 0.0,
+    "y": 0,
+    "w": 300,
+    "h": 650
+   },
+   "capA": {
+    "x": 0.0,
+    "y": 658,
+    "w": 300,
+    "h": 40
+   },
+   "colB": {
+    "x": 340,
+    "y": 0,
+    "w": 280,
+    "h": 698
+   },
+   "imgB": {
+    "x": 340.0,
+    "y": 0,
+    "w": 280,
+    "h": 650
+   },
+   "capB": {
+    "x": 340.0,
+    "y": 658,
+    "w": 280,
+    "h": 40
+   }
+  }
+ },
+ {
+  "name": "layout_ignore_and_arrow",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 10,
+     "y": 20,
+     "w": 0,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 10,
+      "padding": {
+       "t": 8,
+       "r": 8,
+       "b": 8,
+       "l": 8
+      },
+      "justify": "start",
+      "align": "start",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     },
+     "name": "F"
+    },
+    {
+     "id": "A",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 100,
+     "h": 50,
+     "index": "a1",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "Ignored",
+     "type": "image",
+     "x": 555,
+     "y": 666,
+     "w": 80,
+     "h": 80,
+     "index": "a2",
+     "parentId": "F",
+     "src": "",
+     "layoutIgnore": true
+    },
+    {
+     "id": "arr",
+     "type": "arrow",
+     "index": "a3",
+     "parentId": "F",
+     "start": {
+      "x": 0,
+      "y": 0,
+      "binding": null
+     },
+     "end": {
+      "x": 10,
+      "y": 10,
+      "binding": null
+     }
+    },
+    {
+     "id": "B",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 60,
+     "h": 80,
+     "index": "a4",
+     "parentId": "F",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 10,
+    "y": 20,
+    "w": 186,
+    "h": 96
+   },
+   "A": {
+    "x": 18,
+    "y": 28,
+    "w": 100,
+    "h": 50
+   },
+   "Ignored": {
+    "x": 555,
+    "y": 666,
+    "w": 80,
+    "h": 80
+   },
+   "B": {
+    "x": 128,
+    "y": 28,
+    "w": 60,
+    "h": 80
+   }
+  }
+ },
+ {
+  "name": "empty_hug_min_box",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 5,
+     "y": 5,
+     "w": 0,
+     "h": 0,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 10,
+      "padding": {
+       "t": 2,
+       "r": 2,
+       "b": 2,
+       "l": 2
+      },
+      "justify": "start",
+      "align": "start",
+      "sizing": {
+       "main": "hug",
+       "cross": "hug"
+      }
+     },
+     "name": "F"
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 5,
+    "y": 5,
+    "w": 24,
+    "h": 24
+   }
+  }
+ },
+ {
+  "name": "justify_center_fixed",
+  "input": {
+   "format": "plat",
+   "version": 1,
+   "nodes": [
+    {
+     "id": "F",
+     "type": "frame",
+     "x": 0,
+     "y": 0,
+     "w": 500,
+     "h": 200,
+     "index": "a0",
+     "parentId": null,
+     "layout": {
+      "dir": "h",
+      "gap": 10,
+      "padding": {
+       "t": 8,
+       "r": 8,
+       "b": 8,
+       "l": 8
+      },
+      "justify": "center",
+      "align": "end",
+      "sizing": {
+       "main": "fixed",
+       "cross": "fixed"
+      }
+     },
+     "name": "F"
+    },
+    {
+     "id": "A",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 100,
+     "h": 50,
+     "index": "a1",
+     "parentId": "F",
+     "src": ""
+    },
+    {
+     "id": "B",
+     "type": "image",
+     "x": 0,
+     "y": 0,
+     "w": 60,
+     "h": 80,
+     "index": "a2",
+     "parentId": "F",
+     "src": ""
+    }
+   ]
+  },
+  "expected": {
+   "F": {
+    "x": 0,
+    "y": 0,
+    "w": 500,
+    "h": 200
+   },
+   "A": {
+    "x": 165.0,
+    "y": 142,
+    "w": 100,
+    "h": 50
+   },
+   "B": {
+    "x": 275.0,
+    "y": 112,
+    "w": 60,
+    "h": 80
+   }
+  }
+ }
+]
