@@ -3,8 +3,9 @@
 plat's content layer is open: your app can put **anything** in a node — a
 markdown document, a chat, a chart, a form — and the engine gives it drag,
 resize, snapping, grouping, arrows, auto-layout, undo, and persistence for
-free. `examples/rabbithole-lite` is a complete worked example (streaming
-markdown documents with branch-from-selection).
+free. [`examples/rabbithole-lite`](./examples/rabbithole-lite) is a complete worked
+example — streaming markdown documents with branch-from-selection, modeled on
+[Rabbithole](https://rabbithole.ing/).
 
 Structural types are the one closed set: `group`, `frame`, and `arrow` define
 containment and connection semantics the whole engine reasons about, and

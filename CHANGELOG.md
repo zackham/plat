@@ -7,7 +7,7 @@ versions follow semver (pre-1.0: minor bumps may break).
 
 The platform release: the content layer opens up. plat now hosts node types
 it has never heard of — and gives your app a full runtime controller. The
-proof lives in `examples/rabbithole-lite`: a rabbithole-style
+proof lives in `examples/rabbithole-lite`: a [Rabbithole](https://rabbithole.ing/)-style
 "select text → branch → the answer streams into a linked card" app in ~350
 lines of host code, none of them canvas code.
 

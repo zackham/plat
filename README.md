@@ -65,8 +65,8 @@ const host: PlatHost = {
 ```
 
 The proof is [`examples/rabbithole-lite`](./examples/rabbithole-lite): a
-rabbithole-style "select text → branch → the answer streams into a linked
-card" app — recursion, camera glides, one-undo-step streams, dark mode — in
+[Rabbithole](https://rabbithole.ing/)-style "select text → branch → the answer streams into a
+linked card" app — recursion, camera glides, one-undo-step streams, dark mode — in
 ~350 lines of host code, none of them canvas code. Details in
 [`NODES.md`](./NODES.md).
 
@@ -134,8 +134,8 @@ Two runnable hosts, each `npm install && npm run dev`:
 - [`examples/basic`](./examples/basic) — minimal host: ~100-line
   `localStorage` adapter, fake measures, theme toggle.
 - [`examples/rabbithole-lite`](./examples/rabbithole-lite) — the platform
-  showcase: a custom streaming-markdown document node, select-text→branch,
-  headless curve edges, camera tweens.
+  showcase, an homage to [Rabbithole](https://rabbithole.ing/): a custom streaming-markdown
+  document node, select-text→branch, headless curve edges, camera tweens.
 
 ## Current state & caveats
 
