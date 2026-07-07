@@ -1,0 +1,822 @@
+/* plat — the library's complete stylesheet. Import once in your app:
+ *
+ *   import "plat/plat.css"
+ *
+ * Everything is scoped under .plat-root and driven by --plat-* custom
+ * properties, so theming = overriding tokens. Dark mode ships built in:
+ * set data-plat-theme="dark" on <Plat>, or "auto" to follow the OS.
+ * No Tailwind (or any other framework) required in the host app.
+ */
+
+/* ── tokens ─────────────────────────────────────────────── */
+
+.plat-root {
+  /* surfaces */
+  --plat-canvas-bg: #f8fafc;
+  --plat-surface: #ffffff;
+  --plat-surface-translucent: rgba(255, 255, 255, 0.92);
+  --plat-surface-hover: #f1f5f9;
+  --plat-surface-muted: #f1f5f9;
+  --plat-frame-fill: rgba(248, 250, 252, 0.5);
+
+  /* lines */
+  --plat-border: #e2e8f0;
+  --plat-border-soft: #f1f5f9;
+  --plat-frame-border: #cbd5e1;
+
+  /* text */
+  --plat-text: #0f172a;
+  --plat-text-secondary: #475569;
+  --plat-text-muted: #64748b;
+  --plat-text-faint: #94a3b8;
+  --plat-text-disabled: #cbd5e1;
+
+  /* accent (selection, active tools, links) */
+  --plat-accent: #4f46e5;
+  --plat-accent-hover: #6366f1;
+  --plat-accent-strong: #4338ca;
+  --plat-accent-contrast: #ffffff;
+  --plat-accent-soft: #eef2ff;
+  --plat-accent-border: #c7d2fe;
+  --plat-accent-faint: #818cf8;
+  --plat-selection: #6366f1;
+  --plat-selection-fill: rgba(99, 102, 241, 0.08);
+  --plat-marquee-fill: rgba(99, 102, 241, 0.06);
+  --plat-snap-guide: #94a3b8;
+
+  /* status */
+  --plat-danger: #e11d48;
+  --plat-danger-soft: #fff1f2;
+  --plat-success: #059669;
+  --plat-warning-bg: #fffbeb;
+  --plat-warning-border: #fcd34d;
+  --plat-warning-text: #78350f;
+  --plat-warning-btn: #d97706;
+  --plat-warning-btn-hover: #f59e0b;
+
+  /* measure card */
+  --plat-measure-bg: linear-gradient(to bottom right, #eef2ff, #ffffff);
+  --plat-measure-border: #c7d2fe;
+  --plat-measure-ring: #e0e7ff;
+  --plat-measure-head: #818cf8;
+  --plat-measure-note-bg: rgba(255, 255, 255, 0.95);
+
+  /* misc */
+  --plat-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --plat-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1);
+  --plat-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.1);
+  --plat-shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.12);
+  --plat-font:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+/* dark tokens — applied for data-plat-theme="dark", and for "auto" when the
+ * OS prefers dark. (The block is duplicated because plain CSS can't compose
+ * an attribute selector with a media query.) */
+[data-plat-theme="dark"].plat-root {
+  --plat-canvas-bg: #0f172a;
+  --plat-surface: #1e293b;
+  --plat-surface-translucent: rgba(30, 41, 59, 0.92);
+  --plat-surface-hover: #334155;
+  --plat-surface-muted: #334155;
+  --plat-frame-fill: rgba(30, 41, 59, 0.5);
+  --plat-border: #334155;
+  --plat-border-soft: #273449;
+  --plat-frame-border: #475569;
+  --plat-text: #f1f5f9;
+  --plat-text-secondary: #cbd5e1;
+  --plat-text-muted: #94a3b8;
+  --plat-text-faint: #64748b;
+  --plat-text-disabled: #475569;
+  --plat-accent: #6366f1;
+  --plat-accent-hover: #818cf8;
+  --plat-accent-strong: #a5b4fc;
+  --plat-accent-contrast: #ffffff;
+  --plat-accent-soft: rgba(99, 102, 241, 0.16);
+  --plat-accent-border: #4338ca;
+  --plat-accent-faint: #818cf8;
+  --plat-selection: #818cf8;
+  --plat-selection-fill: rgba(129, 140, 248, 0.1);
+  --plat-marquee-fill: rgba(129, 140, 248, 0.08);
+  --plat-snap-guide: #64748b;
+  --plat-danger: #fb7185;
+  --plat-danger-soft: rgba(251, 113, 133, 0.12);
+  --plat-success: #34d399;
+  --plat-warning-bg: rgba(217, 119, 6, 0.15);
+  --plat-warning-border: #b45309;
+  --plat-warning-text: #fcd34d;
+  --plat-warning-btn: #d97706;
+  --plat-warning-btn-hover: #f59e0b;
+  --plat-measure-bg: linear-gradient(to bottom right, rgba(99, 102, 241, 0.14), #1e293b);
+  --plat-measure-border: #4338ca;
+  --plat-measure-ring: rgba(99, 102, 241, 0.25);
+  --plat-measure-head: #a5b4fc;
+  --plat-measure-note-bg: rgba(30, 41, 59, 0.96);
+}
+@media (prefers-color-scheme: dark) {
+  [data-plat-theme="auto"].plat-root {
+    --plat-canvas-bg: #0f172a;
+    --plat-surface: #1e293b;
+    --plat-surface-translucent: rgba(30, 41, 59, 0.92);
+    --plat-surface-hover: #334155;
+    --plat-surface-muted: #334155;
+    --plat-frame-fill: rgba(30, 41, 59, 0.5);
+    --plat-border: #334155;
+    --plat-border-soft: #273449;
+    --plat-frame-border: #475569;
+    --plat-text: #f1f5f9;
+    --plat-text-secondary: #cbd5e1;
+    --plat-text-muted: #94a3b8;
+    --plat-text-faint: #64748b;
+    --plat-text-disabled: #475569;
+    --plat-accent: #6366f1;
+    --plat-accent-hover: #818cf8;
+    --plat-accent-strong: #a5b4fc;
+    --plat-accent-contrast: #ffffff;
+    --plat-accent-soft: rgba(99, 102, 241, 0.16);
+    --plat-accent-border: #4338ca;
+    --plat-accent-faint: #818cf8;
+    --plat-selection: #818cf8;
+    --plat-selection-fill: rgba(129, 140, 248, 0.1);
+    --plat-marquee-fill: rgba(129, 140, 248, 0.08);
+    --plat-snap-guide: #64748b;
+    --plat-danger: #fb7185;
+    --plat-danger-soft: rgba(251, 113, 133, 0.12);
+    --plat-success: #34d399;
+    --plat-warning-bg: rgba(217, 119, 6, 0.15);
+    --plat-warning-border: #b45309;
+    --plat-warning-text: #fcd34d;
+    --plat-warning-btn: #d97706;
+    --plat-warning-btn-hover: #f59e0b;
+    --plat-measure-bg: linear-gradient(to bottom right, rgba(99, 102, 241, 0.14), #1e293b);
+    --plat-measure-border: #4338ca;
+    --plat-measure-ring: rgba(99, 102, 241, 0.25);
+    --plat-measure-head: #a5b4fc;
+    --plat-measure-note-bg: rgba(30, 41, 59, 0.96);
+  }
+}
+
+/* ── root & viewport ────────────────────────────────────── */
+
+.plat-root {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  font-family: var(--plat-font);
+  color: var(--plat-text);
+}
+.plat-root *,
+.plat-root *::before,
+.plat-root *::after {
+  box-sizing: border-box;
+}
+/* :where() keeps the reset at zero specificity so every single-class
+ * component rule (e.g. .plat-tool--active) beats it. */
+:where(.plat-root button) {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.plat-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--plat-canvas-bg);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* full-area status screens (loading / load error) */
+.plat-status {
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--plat-font);
+  font-size: 0.875rem;
+  color: var(--plat-text-faint);
+}
+.plat-status--error {
+  color: var(--plat-danger);
+}
+
+/* ── conflict banner ────────────────────────────────────── */
+
+.plat-conflict {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(90%, 34rem);
+  border: 1px solid var(--plat-warning-border);
+  background: var(--plat-warning-bg);
+  color: var(--plat-warning-text);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  box-shadow: var(--plat-shadow-md);
+}
+.plat-conflict__btn {
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  background: var(--plat-warning-btn);
+  color: #ffffff;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.plat-conflict__btn:hover {
+  background: var(--plat-warning-btn-hover);
+}
+
+/* ── bottom toolbar ─────────────────────────────────────── */
+
+.plat-toolbar {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.plat-toolbar__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  background: var(--plat-surface-translucent);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-md);
+  padding: 0.25rem;
+  pointer-events: auto;
+}
+.plat-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  color: var(--plat-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+.plat-tool:hover {
+  background: var(--plat-surface-hover);
+}
+.plat-tool--active,
+.plat-tool--active:hover {
+  background: var(--plat-accent);
+  color: var(--plat-accent-contrast);
+}
+.plat-tool--open {
+  background: var(--plat-accent-soft);
+  color: var(--plat-accent);
+}
+.plat-toolbar__sep {
+  width: 1px;
+  height: 1.5rem;
+  background: var(--plat-border);
+  margin: 0 0.25rem;
+}
+
+/* toolbar popup menu (insert measure) */
+.plat-menu {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14rem;
+  max-height: 18rem;
+  overflow: auto;
+  background: var(--plat-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-lg);
+  padding: 0.25rem;
+}
+.plat-menu__item {
+  width: 100%;
+  text-align: left;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  color: var(--plat-text-secondary);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plat-menu__item:hover {
+  background: var(--plat-accent-soft);
+}
+.plat-menu__item--accent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--plat-accent);
+  font-weight: 500;
+  white-space: normal;
+}
+.plat-menu__empty {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--plat-text-faint);
+}
+.plat-menu__sep {
+  margin: 0.25rem 0;
+  border-top: 1px solid var(--plat-border-soft);
+}
+
+/* ── zoom / history controls (bottom right) ─────────────── */
+
+.plat-controls {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--plat-surface-translucent);
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-sm);
+  padding: 0.25rem;
+  pointer-events: auto;
+}
+.plat-ctl {
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  color: var(--plat-text-secondary);
+  display: flex;
+  align-items: center;
+}
+.plat-ctl:hover {
+  background: var(--plat-surface-hover);
+}
+.plat-controls__sep {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--plat-border);
+  margin: 0 0.125rem;
+}
+.plat-zoom-label {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--plat-text-muted);
+  width: 2.75rem;
+  text-align: center;
+}
+.plat-zoom-label:hover {
+  color: var(--plat-text);
+}
+.plat-controls__hint {
+  font-size: 11px;
+  color: var(--plat-success);
+  padding-right: 0.25rem;
+}
+.plat-ctl--success {
+  color: var(--plat-success);
+}
+.plat-ctl--danger {
+  color: var(--plat-danger);
+}
+
+/* ── measure card ───────────────────────────────────────── */
+
+.plat-measure {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--plat-measure-bg);
+  border: 1px solid var(--plat-measure-border);
+  box-shadow: 0 0 0 1px var(--plat-measure-ring), var(--plat-shadow-sm);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.plat-measure__inner {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  height: 100%;
+}
+.plat-measure__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.plat-measure__title {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--plat-measure-head);
+}
+.plat-measure__title span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plat-measure__dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--plat-measure-head);
+  flex-shrink: 0;
+}
+.plat-measure__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+.plat-measure__ctl {
+  color: var(--plat-text-faint);
+  display: flex;
+  align-items: center;
+}
+.plat-measure__ctl:hover {
+  color: var(--plat-text-secondary);
+}
+.plat-measure__ctl:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.plat-measure__body {
+  flex: 1 1 0%;
+  display: flex;
+  min-height: 0;
+}
+.plat-measure__body--value {
+  align-items: center;
+  justify-content: center;
+}
+.plat-measure__value {
+  font-weight: 600;
+  color: var(--plat-text);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plat-measure__text {
+  flex: 1 1 0%;
+  overflow: hidden;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+  text-align: left;
+  color: var(--plat-text);
+}
+.plat-measure__empty {
+  color: var(--plat-text-faint);
+  font-size: 0.75rem;
+}
+.plat-measure__error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--plat-danger);
+  font-size: 0.75rem;
+  min-width: 0;
+}
+.plat-measure__error span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plat-measure__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 10px;
+  color: var(--plat-text-faint);
+}
+.plat-measure__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plat-measure__foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.plat-measure__note-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--plat-text-faint);
+  font-weight: 500;
+  pointer-events: auto;
+}
+.plat-measure__note-btn:hover,
+.plat-measure__note-btn--open {
+  color: var(--plat-accent);
+}
+.plat-measure__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--plat-accent);
+  font-weight: 600;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.plat-measure__link:hover {
+  color: var(--plat-accent-strong);
+  text-decoration: underline;
+}
+.plat-measure__note {
+  position: absolute;
+  inset: 0.25rem;
+  z-index: 10;
+  background: var(--plat-measure-note-bg);
+  border: 1px solid var(--plat-measure-border);
+  border-radius: 0.375rem;
+  box-shadow: var(--plat-shadow-lg);
+  padding: 0.5rem;
+  overflow: auto;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.375;
+  color: var(--plat-text-muted);
+  white-space: pre-line;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* ── style panel (top right) ────────────────────────────── */
+
+.plat-panel {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 12rem;
+  background: var(--plat-surface);
+  border-radius: 0.75rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-md);
+  padding: 0.5rem;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: calc(100% - 1.5rem);
+  overflow: auto;
+}
+.plat-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.plat-panel__group--tight {
+  gap: 0.25rem;
+}
+.plat-panel__group--arrange {
+  gap: 0.375rem;
+  border-top: 1px solid var(--plat-border-soft);
+  padding-top: 0.5rem;
+}
+.plat-panel__title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--plat-text-faint);
+  padding: 0 0.25rem;
+}
+.plat-panel__row {
+  display: flex;
+  gap: 0.25rem;
+}
+.plat-panel__row--wrap {
+  flex-wrap: wrap;
+}
+.plat-panel__hint {
+  font-size: 10px;
+  color: var(--plat-text-faint);
+  padding: 0 0.25rem;
+}
+.plat-panel__hint--lg {
+  font-size: 11px;
+}
+
+.plat-btn {
+  height: 2rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--plat-text-secondary);
+  border: 1px solid var(--plat-border);
+}
+.plat-btn:hover {
+  background: var(--plat-surface-hover);
+}
+.plat-btn--primary {
+  background: var(--plat-accent);
+  color: var(--plat-accent-contrast);
+  border: none;
+}
+.plat-btn--primary:hover {
+  background: var(--plat-accent-hover);
+}
+.plat-btn--sm {
+  height: 1.75rem;
+  font-size: 11px;
+  color: var(--plat-text-muted);
+}
+
+.plat-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.25rem;
+  color: var(--plat-text-secondary);
+}
+.plat-icon-btn:hover {
+  background: var(--plat-surface-hover);
+}
+.plat-icon-btn--active,
+.plat-icon-btn--active:hover {
+  background: var(--plat-accent);
+  color: var(--plat-accent-contrast);
+}
+
+.plat-seg {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--plat-surface-muted);
+  border-radius: 0.5rem;
+  padding: 0.125rem;
+  flex: 1 1 0%;
+}
+.plat-seg__btn {
+  flex: 1 1 0%;
+  height: 1.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--plat-text-muted);
+}
+.plat-seg__btn--active {
+  background: var(--plat-surface);
+  box-shadow: var(--plat-shadow-sm);
+  color: var(--plat-text);
+}
+
+.plat-swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+}
+.plat-swatch--active {
+  box-shadow: 0 0 0 1px var(--plat-surface), 0 0 0 3px var(--plat-accent-hover);
+}
+
+.plat-size-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.plat-size-row__label {
+  font-size: 10px;
+  color: var(--plat-text-faint);
+  width: 2.25rem;
+}
+
+.plat-num {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 11px;
+  color: var(--plat-text-muted);
+}
+.plat-num__label {
+  width: 1.75rem;
+}
+.plat-num input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.125rem 0.25rem;
+  border: 1px solid var(--plat-border);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  background: var(--plat-surface);
+  color: var(--plat-text);
+}
+
+/* ── context menu ───────────────────────────────────────── */
+
+.plat-cmenu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 180px;
+  background: var(--plat-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-xl);
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--plat-text-secondary);
+  font-family: var(--plat-font);
+}
+.plat-cmenu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0 0.75rem;
+  height: 2rem;
+  text-align: left;
+  color: inherit;
+}
+.plat-cmenu__item:hover {
+  background: var(--plat-accent-soft);
+}
+.plat-cmenu__item--disabled,
+.plat-cmenu__item--disabled:hover {
+  color: var(--plat-text-disabled);
+  background: none;
+  cursor: default;
+}
+.plat-cmenu__item--danger {
+  color: var(--plat-danger);
+}
+.plat-cmenu__item--danger:hover {
+  background: var(--plat-danger-soft);
+}
+.plat-cmenu__hint {
+  font-size: 11px;
+  color: var(--plat-text-faint);
+}
+.plat-cmenu__sep {
+  margin: 0.25rem 0;
+  border-top: 1px solid var(--plat-border-soft);
+}
+.plat-cmenu__subwrap {
+  position: relative;
+}
+.plat-cmenu__sub {
+  position: absolute;
+  min-width: 180px;
+  background: var(--plat-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--plat-border);
+  box-shadow: var(--plat-shadow-xl);
+  padding: 0.25rem 0;
+}
+.plat-cmenu__sub--right {
+  left: 100%;
+}
+.plat-cmenu__sub--left {
+  right: 100%;
+}
+.plat-cmenu__sub--down {
+  top: 0;
+  margin-top: -4px;
+}
+.plat-cmenu__sub--up {
+  bottom: 0;
+  margin-bottom: -4px;
+}
+
+/* ── animation helpers ──────────────────────────────────── */
+
+@keyframes plat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.plat-spin {
+  animation: plat-spin 1s linear infinite;
+}
+@keyframes plat-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+.plat-pulse {
+  animation: plat-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

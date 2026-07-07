@@ -71,10 +71,10 @@ export function StylePanel({ store }: { store: PlatStore }) {
     single && store.commit(() => store.replaceNode({ ...single, ...p } as AnyNode))
 
   return (
-    <div className="absolute top-3 right-3 w-48 bg-white rounded-xl border border-slate-200 shadow-md p-2 pointer-events-auto flex flex-col gap-2 max-h-[calc(100%-1.5rem)] overflow-auto">
+    <div className="plat-panel">
       {single && (
-        <div className="flex flex-col gap-2">
-          <div className="text-[10px] uppercase tracking-wide text-slate-400 px-1">{single.type}</div>
+        <div className="plat-panel__group">
+          <div className="plat-panel__title">{single.type}</div>
           {single.type === "arrow" && (
             <>
               <Seg
@@ -93,21 +93,19 @@ export function StylePanel({ store }: { store: PlatStore }) {
           )}
           {single.type === "text" && (
             <>
-              <div className="flex gap-1">
+              <div className="plat-panel__row">
                 {TEXT_SIZES.map((s) => (
                   <button
                     key={s.px}
                     type="button"
                     onClick={() => patch({ fontSize: s.px } as Partial<AnyNode>)}
-                    className={`flex-1 h-8 rounded text-xs ${
-                      (single as TextNode).fontSize === s.px ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"
-                    }`}
+                    className={`plat-seg__btn${(single as TextNode).fontSize === s.px ? " plat-seg__btn--active" : ""}`}
                   >
                     {s.label}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-1">
+              <div className="plat-panel__row">
                 <IconBtn active={(single as TextNode).align !== "center"} onClick={() => patch({ align: "left" } as Partial<AnyNode>)}>
                   <AlignLeft size={15} />
                 </IconBtn>
@@ -119,7 +117,7 @@ export function StylePanel({ store }: { store: PlatStore }) {
             </>
           )}
           {single.type === "image" && (
-            <button type="button" onClick={() => downloadOriginal(store)} className="h-8 rounded text-xs text-slate-600 hover:bg-slate-100 border border-slate-200">
+            <button type="button" onClick={() => downloadOriginal(store)} className="plat-btn">
               Download original
             </button>
           )}
@@ -127,15 +125,15 @@ export function StylePanel({ store }: { store: PlatStore }) {
             <LayoutSection store={store} frame={single as FrameNode} />
           )}
           {single.type === "measure" && (
-            <div className="text-[11px] text-slate-400 px-1">Use the card controls for font size & refresh.</div>
+            <div className="plat-panel__hint plat-panel__hint--lg">Use the card controls for font size & refresh.</div>
           )}
         </div>
       )}
 
       {/* Arrange */}
-      <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-2">
-        <div className="text-[10px] uppercase tracking-wide text-slate-400 px-1">Arrange</div>
-        <div className="flex gap-1 flex-wrap">
+      <div className="plat-panel__group plat-panel__group--arrange">
+        <div className="plat-panel__title">Arrange</div>
+        <div className="plat-panel__row plat-panel__row--wrap">
           {canFrame && (
             <IconBtn title="Frame selection (⌘⌥F)" onClick={() => frameSelection(store)}>
               <FrameIcon size={15} />
@@ -153,17 +151,17 @@ export function StylePanel({ store }: { store: PlatStore }) {
           )}
         </div>
         {boxCount >= 2 && (
-          <div className="flex gap-1 flex-wrap">
-            <AlignBtn op="left" title="Align left"><AlignStartVertical size={15} /></AlignBtn>
-            <AlignBtn op="center-x" title="Align center"><AlignCenterVertical size={15} /></AlignBtn>
-            <AlignBtn op="right" title="Align right"><AlignEndVertical size={15} /></AlignBtn>
-            <AlignBtn op="top" title="Align top"><AlignStartHorizontal size={15} /></AlignBtn>
-            <AlignBtn op="center-y" title="Align middle"><AlignCenterHorizontal size={15} /></AlignBtn>
-            <AlignBtn op="bottom" title="Align bottom"><AlignEndHorizontal size={15} /></AlignBtn>
+          <div className="plat-panel__row plat-panel__row--wrap">
+            <AlignBtn store={store} op="left" title="Align left"><AlignStartVertical size={15} /></AlignBtn>
+            <AlignBtn store={store} op="center-x" title="Align center"><AlignCenterVertical size={15} /></AlignBtn>
+            <AlignBtn store={store} op="right" title="Align right"><AlignEndVertical size={15} /></AlignBtn>
+            <AlignBtn store={store} op="top" title="Align top"><AlignStartHorizontal size={15} /></AlignBtn>
+            <AlignBtn store={store} op="center-y" title="Align middle"><AlignCenterHorizontal size={15} /></AlignBtn>
+            <AlignBtn store={store} op="bottom" title="Align bottom"><AlignEndHorizontal size={15} /></AlignBtn>
           </div>
         )}
         {boxCount >= 3 && (
-          <div className="flex gap-1">
+          <div className="plat-panel__row">
             <IconBtn title="Distribute horizontally" onClick={() => distribute(store, "x")}>
               <AlignHorizontalDistributeCenter size={15} />
             </IconBtn>
@@ -172,7 +170,7 @@ export function StylePanel({ store }: { store: PlatStore }) {
             </IconBtn>
           </div>
         )}
-        <div className="flex gap-1">
+        <div className="plat-panel__row">
           <IconBtn title="Bring to front" onClick={() => store.commit(() => store.bringToFront(selectedIds))}>
             <BringToFront size={15} />
           </IconBtn>
@@ -189,14 +187,24 @@ export function StylePanel({ store }: { store: PlatStore }) {
       </div>
     </div>
   )
+}
 
-  function AlignBtn({ op, title, children }: { op: AlignOp; title: string; children: React.ReactNode }) {
-    return (
-      <IconBtn title={title} onClick={() => align(store, op)}>
-        {children}
-      </IconBtn>
-    )
-  }
+function AlignBtn({
+  store,
+  op,
+  title,
+  children,
+}: {
+  store: PlatStore
+  op: AlignOp
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <IconBtn title={title} onClick={() => align(store, op)}>
+      {children}
+    </IconBtn>
+  )
 }
 
 function LayoutSection({ store, frame }: { store: PlatStore; frame: FrameNode }) {
@@ -204,7 +212,7 @@ function LayoutSection({ store, frame }: { store: PlatStore; frame: FrameNode })
 
   if (!L) {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="plat-panel__group plat-panel__group--tight">
         <button
           type="button"
           onClick={() => {
@@ -216,32 +224,19 @@ function LayoutSection({ store, frame }: { store: PlatStore; frame: FrameNode })
             ) as BoxNode[]).sort((a, b) => a.x - b.x || a.y - b.y)
             convertToLayout(store, frame.id, kids.map((k) => k.id), DEFAULT_LAYOUT)
           }}
-          className="h-8 rounded text-xs bg-indigo-600 text-white hover:bg-indigo-500"
+          className="plat-btn plat-btn--primary"
         >
           + Auto-layout
         </button>
-        <div className="text-[10px] text-slate-400 px-1">Double-click the title to rename.</div>
+        <div className="plat-panel__hint">Double-click the title to rename.</div>
       </div>
     )
   }
 
   const set = (p: Partial<LayoutProps>) => setLayoutProps(store, frame.id, p)
-  const SizeSeg = ({ axis }: { axis: "main" | "cross" }) => (
-    <div className="flex items-center gap-1">
-      <span className="text-[10px] text-slate-400 w-9">{axis === "main" ? "Main" : "Cross"}</span>
-      <Seg
-        options={[
-          { v: "hug", label: "Hug" },
-          { v: "fixed", label: "Fixed" },
-        ]}
-        value={L.sizing[axis]}
-        onChange={(v) => set({ sizing: { [axis]: v } as Partial<LayoutProps["sizing"]> as LayoutProps["sizing"] })}
-      />
-    </div>
-  )
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="plat-panel__group plat-panel__group--tight">
       <Seg
         options={[
           { v: "h", label: "Row" },
@@ -250,7 +245,7 @@ function LayoutSection({ store, frame }: { store: PlatStore; frame: FrameNode })
         value={L.dir}
         onChange={(v) => set({ dir: v as "h" | "v" })}
       />
-      <div className="flex gap-1">
+      <div className="plat-panel__row">
         <NumField label="Gap" value={L.gap} onChange={(n) => set({ gap: n })} />
         <NumField label="Pad" value={L.padding.t} onChange={(n) => set({ padding: { t: n, r: n, b: n, l: n } })} />
       </div>
@@ -273,38 +268,60 @@ function LayoutSection({ store, frame }: { store: PlatStore; frame: FrameNode })
         value={L.align}
         onChange={(v) => set({ align: v as LayoutProps["align"] })}
       />
-      <SizeSeg axis="main" />
-      <SizeSeg axis="cross" />
-      <button
-        type="button"
-        onClick={() => removeLayout(store, frame.id)}
-        className="h-7 rounded text-[11px] text-slate-500 hover:bg-slate-100 border border-slate-200"
-      >
+      <SizeSeg axis="main" layout={L} onSet={set} />
+      <SizeSeg axis="cross" layout={L} onSet={set} />
+      <button type="button" onClick={() => removeLayout(store, frame.id)} className="plat-btn plat-btn--sm">
         Remove auto-layout
       </button>
     </div>
   )
 }
 
+function SizeSeg({
+  axis,
+  layout,
+  onSet,
+}: {
+  axis: "main" | "cross"
+  layout: LayoutProps
+  onSet: (p: Partial<LayoutProps>) => void
+}) {
+  return (
+    <div className="plat-size-row">
+      <span className="plat-size-row__label">{axis === "main" ? "Main" : "Cross"}</span>
+      <Seg
+        options={[
+          { v: "hug", label: "Hug" },
+          { v: "fixed", label: "Fixed" },
+        ]}
+        value={layout.sizing[axis]}
+        onChange={(v) =>
+          onSet({ sizing: { ...layout.sizing, [axis]: v } as LayoutProps["sizing"] })
+        }
+      />
+    </div>
+  )
+}
+
 function NumField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
   return (
-    <label className="flex-1 min-w-0 flex items-center gap-1 text-[11px] text-slate-500">
-      <span className="w-7">{label}</span>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-full min-w-0 px-1 py-0.5 border border-slate-200 rounded text-xs"
-      />
+    <label className="plat-num">
+      <span className="plat-num__label">{label}</span>
+      <input type="number" value={value} onChange={(e) => onChange(Number(e.target.value) || 0)} />
     </label>
   )
 }
 
 function Seg({ options, value, onChange }: { options: { v: string; label: string }[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+    <div className="plat-seg">
       {options.map((o) => (
-        <button key={o.v} type="button" onClick={() => onChange(o.v)} className={`flex-1 h-7 rounded-md text-xs ${value === o.v ? "bg-white shadow-sm text-slate-900" : "text-slate-500"}`}>
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onChange(o.v)}
+          className={`plat-seg__btn${value === o.v ? " plat-seg__btn--active" : ""}`}
+        >
           {o.label}
         </button>
       ))}
@@ -314,9 +331,15 @@ function Seg({ options, value, onChange }: { options: { v: string; label: string
 
 function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="plat-panel__row plat-panel__row--wrap">
       {COLORS.map((c) => (
-        <button key={c} type="button" onClick={() => onChange(c)} className={`w-6 h-6 rounded-full ${value === c ? "ring-2 ring-offset-1 ring-indigo-500" : ""}`} style={{ background: c }} />
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          className={`plat-swatch${value === c ? " plat-swatch--active" : ""}`}
+          style={{ background: c }}
+        />
       ))}
     </div>
   )
@@ -328,7 +351,7 @@ function IconBtn({ active, onClick, title, children }: { active?: boolean; onCli
       type="button"
       title={title}
       onClick={onClick}
-      className={`flex items-center justify-center w-8 h-8 rounded ${active ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+      className={`plat-icon-btn${active ? " plat-icon-btn--active" : ""}`}
     >
       {children}
     </button>

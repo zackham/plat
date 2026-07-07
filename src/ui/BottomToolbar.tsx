@@ -67,8 +67,8 @@ export function BottomToolbar({
   }, [measureOpen, host])
 
   return (
-    <div className="absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none">
-      <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur rounded-xl border border-slate-200 shadow-md p-1 pointer-events-auto">
+    <div className="plat-toolbar">
+      <div className="plat-toolbar__bar">
         {TOOLS.map((t) => {
           const Icon = t.icon
           const active = tool === t.id
@@ -78,43 +78,37 @@ export function BottomToolbar({
               type="button"
               title={t.title}
               onClick={() => onTool(t.id)}
-              className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-                active
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
+              className={active ? "plat-tool plat-tool--active" : "plat-tool"}
             >
               <Icon size={18} />
             </button>
           )
         })}
         {(onInsertImage || canPick || onNewMeasure) && (
-          <div className="w-px h-6 bg-slate-200 mx-1" />
+          <div className="plat-toolbar__sep" />
         )}
         {onInsertImage && (
           <button
             type="button"
             title="Insert image"
             onClick={onInsertImage}
-            className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100"
+            className="plat-tool"
           >
             <ImagePlus size={18} />
           </button>
         )}
         {(canPick || onNewMeasure) && (
-          <div className="relative">
+          <div style={{ position: "relative" }}>
             <button
               type="button"
               title="Insert measure"
               onClick={toggleMeasureMenu}
-              className={`flex items-center justify-center w-10 h-10 rounded-lg ${
-                measureOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-100"
-              }`}
+              className={measureOpen ? "plat-tool plat-tool--open" : "plat-tool"}
             >
               <Gauge size={18} />
             </button>
             {measureOpen && (
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-56 max-h-72 overflow-auto bg-white rounded-lg border border-slate-200 shadow-lg p-1">
+              <div className="plat-menu">
                 {onNewMeasure && (
                   <>
                     <button
@@ -123,18 +117,18 @@ export function BottomToolbar({
                         onNewMeasure()
                         setMeasureOpen(false)
                       }}
-                      className="w-full flex items-center gap-2 text-left px-2 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded font-medium"
+                      className="plat-menu__item plat-menu__item--accent"
                     >
                       <Sparkles size={14} /> {newMeasureLabel}
                     </button>
-                    {canPick && <div className="my-1 border-t border-slate-100" />}
+                    {canPick && <div className="plat-menu__sep" />}
                   </>
                 )}
                 {canPick &&
                   (items === null ? (
-                    <div className="px-2 py-1.5 text-xs text-slate-400">Loading…</div>
+                    <div className="plat-menu__empty">Loading…</div>
                   ) : items.length === 0 ? (
-                    <div className="px-2 py-1.5 text-xs text-slate-400">No measures yet</div>
+                    <div className="plat-menu__empty">No measures yet</div>
                   ) : (
                     items.map((m) => (
                       <button
@@ -144,7 +138,7 @@ export function BottomToolbar({
                           onInsertMeasure(m.id)
                           setMeasureOpen(false)
                         }}
-                        className="w-full text-left px-2 py-1.5 text-sm text-slate-700 hover:bg-indigo-50 rounded truncate"
+                        className="plat-menu__item"
                       >
                         {m.name}
                       </button>

@@ -44,6 +44,12 @@ const RULES: Rule[] = [
     // src the host itself supplied — host-agnostic by construction.
     allow: (file, line) => file === "export.ts" && line.includes("fetch(n.src)"),
   },
+  {
+    // All chrome styling lives in plat.css behind --plat-* tokens; utility
+    // classes from a host CSS framework must never reappear in the library.
+    name: "tailwind-style utility classes (styles live in plat.css)",
+    pattern: /className=.*(?:slate-|indigo-|rose-|emerald-|amber-|bg-white|text-white|flex-1 )/,
+  },
 ]
 
 describe("library import boundary", () => {

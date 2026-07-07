@@ -29,7 +29,7 @@ export const ArrowLayer = memo(function ArrowLayer({
     >
       {arrows.map((a) => {
         const info = getArrowInfo(a, byId)
-        const color = selectedIds.has(a.id) ? "#6366f1" : a.color ?? "#334155"
+        const color = selectedIds.has(a.id) ? "var(--plat-selection)" : a.color ?? "var(--plat-text-secondary)"
         const d = info.points
           .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
           .join(" ")

@@ -53,14 +53,49 @@ export interface SaveDocOptions {
   final?: boolean
 }
 
+/** Optional result of a save. A host that implements revision tracking
+ *  returns the doc's NEW revision so the editor stamps it on the next save. */
+export interface SaveDocResult {
+  revision?: number
+}
+
+/**
+ * Thrown (rejected) by a host's `saveDoc` when the stored doc changed under
+ * the editor — i.e. the save's base revision (`doc.revision`) no longer
+ * matches storage. The editor then freezes autosave and shows a conflict
+ * banner instead of silently clobbering the other writer. See EMBEDDING.md.
+ */
+export class PlatSaveConflictError extends Error {
+  readonly code = "plat/conflict"
+  constructor(message = "plat changed elsewhere") {
+    super(message)
+    this.name = "PlatSaveConflictError"
+  }
+}
+
+/** instanceof-safe conflict check (also honors a bare `{code:"plat/conflict"}`
+ *  shape, so hosts don't strictly need our error class). */
+export function isSaveConflict(e: unknown): boolean {
+  return (
+    e instanceof PlatSaveConflictError ||
+    (typeof e === "object" && e !== null && (e as { code?: string }).code === "plat/conflict")
+  )
+}
+
 export interface PlatHost {
   /** Load the document. Resolve null for a brand-new canvas (the editor then
    *  creates and persists an empty doc). Reject ⇒ a load-error screen; the
    *  editor will NOT treat a failed load as an empty canvas. */
   loadDoc(): Promise<PlatDoc | null>
   /** Persist the document. Transport-level retries and save-state UI are the
-   *  host's concern. Omit ⇒ the canvas is view-only. */
-  saveDoc?(doc: PlatDoc, opts?: SaveDocOptions): Promise<void>
+   *  host's concern. Omit ⇒ the canvas is view-only.
+   *
+   *  Optional revision protocol (multi-writer safety, see EMBEDDING.md): the
+   *  editor echoes the revision it loaded as `doc.revision` (its BASE); a
+   *  revision-aware host rejects a stale base with `PlatSaveConflictError`
+   *  and otherwise stores the doc under a new revision, returning it as
+   *  `{revision}`. Hosts that don't care ignore all of this. */
+  saveDoc?(doc: PlatDoc, opts?: SaveDocOptions): Promise<SaveDocResult | void>
   /** Store an image blob, return a URL the canvas can render (must remain
    *  resolvable for future loads). Omit ⇒ image insert/paste disabled. */
   uploadAsset?(blob: Blob, name?: string): Promise<{ src: string }>

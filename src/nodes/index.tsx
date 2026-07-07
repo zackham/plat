@@ -36,7 +36,7 @@ function TextContent({ node }: NodeContentProps) {
         height: "100%",
         fontSize: n.fontSize,
         lineHeight: 1.3,
-        color: n.color ?? "#0f172a",
+        color: n.color ?? "var(--plat-text)", // unset = theme-following; authored colors render as-is
         textAlign: n.align ?? "left",
         whiteSpace: "pre-wrap",
         wordBreak: "break-word",
@@ -47,7 +47,7 @@ function TextContent({ node }: NodeContentProps) {
       }}
     >
       {n.text || (
-        <span style={{ color: "#94a3b8" }}>text</span>
+        <span style={{ color: "var(--plat-text-faint)" }}>text</span>
       )}
     </div>
   )

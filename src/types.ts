@@ -154,6 +154,12 @@ export interface PlatDoc {
   format: "plat"
   version: 1
   nodes: AnyNode[]
+  /** Optional multi-writer safety (see EMBEDDING.md). On a stored doc: the
+   *  revision it was saved under. On a doc handed to `saveDoc`: the BASE
+   *  revision the editor's changes started from — a revision-aware host
+   *  rejects the save when it no longer matches storage. Absent ⇒
+   *  last-writer-wins. */
+  revision?: number
 }
 
 export const isArrow = (n: AnyNode): n is ArrowNode => n.type === "arrow"

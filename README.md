@@ -54,22 +54,48 @@ static JSON — is entirely your concern, and so is sandboxing if your users
 author them. The library defines the contract and renders what conforms.
 Details in [`EMBEDDING.md`](./EMBEDDING.md).
 
+## Styling & themes
+
+```ts
+import "plat/plat.css"
+```
+
+One stylesheet, no CSS framework required in the host. Everything is scoped
+under `.plat-root` and driven by `--plat-*` design tokens — dark mode is built
+in (`<Plat theme="dark">` or `"auto"`), and custom theming is overriding
+tokens in your own CSS. Details in [`HOSTING.md`](./HOSTING.md).
+
+## Multi-writer safety
+
+Saves carry an optional base **revision**; a revision-aware host rejects a
+stale save and the editor freezes with a reload banner instead of silently
+clobbering the other writer (two tabs, or an agent editing alongside you).
+Hosts that don't care simply ignore the field — last-writer-wins, as before.
+
 ## Docs
 
 | Doc | What it covers |
 |---|---|
-| [`EMBEDDING.md`](./EMBEDDING.md) | the `PlatHost` adapter contract + the measure data contract |
+| [`EMBEDDING.md`](./EMBEDDING.md) | the `PlatHost` adapter contract + the measure data contract + revisions |
+| [`HOSTING.md`](./HOSTING.md) | build integration, styles/theming, and the gotchas |
+| [`AUTHORING.md`](./AUTHORING.md) | building plats programmatically (agents welcome) |
 | [`FORMAT.md`](./FORMAT.md) | the `plat` document format — the programmatic-authoring API |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | how the engine works: store, camera, interactions, rendering, history |
+| [`CHANGELOG.md`](./CHANGELOG.md) | release notes |
+
+## Example
+
+[`examples/basic`](./examples/basic) is a complete minimal host — a Vite app
+with a ~100-line `localStorage` adapter, fake measures, and a theme toggle:
+
+```
+cd examples/basic && npm install && npm run dev
+```
 
 ## Current state & caveats
 
-- **Consumed as source** for now (`exports` points at `src/index.ts`): your
-  bundler compiles it (Vite works out of the box). No prebuilt dist yet.
-- **Styling is Tailwind utility classes**: include `plat/src` in your Tailwind
-  content/`@source` scan. A compiled stylesheet with theme tokens (and dark
-  mode) is the next planned change, which will remove the Tailwind
-  requirement.
+- **Consumed as source** (`exports` points at `src/index.ts`): your bundler
+  compiles it (Vite works out of the box). No prebuilt dist yet.
 - React ≥ 18 peer dependency; `lucide-react` for icons.
 - No rotation, by design — that's what keeps the group/frame model flat.
 
@@ -79,4 +105,5 @@ Details in [`EMBEDDING.md`](./EMBEDDING.md).
 npm install
 npm test          # vitest (jsdom)
 npm run typecheck
+npm run lint
 ```

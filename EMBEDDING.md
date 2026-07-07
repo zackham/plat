@@ -87,6 +87,30 @@ python `compute()` scripts server-side; another might proxy a SQL query,
 call an analytics API, or return static JSON. Sandboxing user-authored
 measure code is likewise a host concern by design.
 
+## The revision protocol (optional multi-writer safety)
+
+Without it, saves are last-writer-wins: two tabs, or an agent editing next to
+the editor, can silently clobber each other. Opting in:
+
+1. Store a `revision` number on the doc. On save, treat the incoming
+   `doc.revision` as the writer's **base**: reject if it doesn't match the
+   stored revision, otherwise store the doc under `stored + 1` and return
+   `{revision: stored + 1}` from `saveDoc`.
+2. Reject by throwing `PlatSaveConflictError` (exported), or any error with
+   `code: "plat/conflict"`. Do NOT transport-retry a conflict.
+3. The editor then freezes autosave and shows a "changed elsewhere — Reload"
+   banner; Reload re-runs `loadDoc` and resumes.
+
+Writers that send no `revision` (older agents, scripts) are accepted
+last-writer-wins and still move the revision forward — the protocol degrades
+gracefully in both directions. Programmatic writers should GET-then-PUT the
+doc with its `revision` field echoed unchanged (AUTHORING.md).
+
+Note the residual race: unless your backend's check-and-set is atomic, two
+same-base saves can both pass. The protocol's job is stopping the
+*human-scale* clobber; make the check atomic if your host is truly
+multi-user-concurrent.
+
 ## Imperative handle
 
 `onReady` receives a `PlatHandle` for chrome that lives outside the
@@ -99,7 +123,8 @@ canvas (side panels, refresh buttons):
 
 ## Host-specific UI slots
 
-`renderMeasureCreate` (+ `newMeasureLabel`) plugs a host's own
+`theme` selects the built-in light/dark/auto chrome theme (HOSTING.md covers
+token overrides). `renderMeasureCreate` (+ `newMeasureLabel`) plugs a host's own
 measure-creation flow into the toolbar's insert-measure menu (e.g. an
 analytics-chart import modal). The library only calls
 `onCreated({id})` / `onClose()`.

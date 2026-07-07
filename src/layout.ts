@@ -225,3 +225,29 @@ export function outermostLayoutAncestor(nodeId: string, nodes: Nodes): string | 
   }
   return top
 }
+
+/**
+ * Settle every auto-layout container in a document's node list — the headless
+ * equivalent of the editor's reconciler, for programmatic authoring. There is
+ * deliberately no reflow-on-load (opening a plat never moves anything), so a
+ * process that writes layout containers must settle coordinates before
+ * persisting (FORMAT.md §5). Returns a NEW array in the same order with
+ * patched x/y/w/h; the input is not mutated. Idempotent.
+ */
+export function settleDoc(nodes: AnyNode[]): AnyNode[] {
+  const byId: Nodes = {}
+  for (const n of nodes) byId[n.id] = n
+  const roots = new Set<string>()
+  for (const id in byId) {
+    if (isLayoutContainer(byId[id])) {
+      const top = outermostLayoutAncestor(id, byId)
+      if (top) roots.add(top)
+    }
+  }
+  for (const r of roots) {
+    for (const p of reflowLayoutFrame(r, byId)) {
+      byId[p.id] = { ...byId[p.id], ...p.patch } as AnyNode
+    }
+  }
+  return nodes.map((n) => byId[n.id])
+}

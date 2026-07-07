@@ -39,18 +39,18 @@ export function MeasureContent({
   const [showNote, setShowNote] = useState(false)
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 ring-1 ring-indigo-100 rounded-lg shadow-sm overflow-hidden flex flex-col">
-      <div className="p-3 flex flex-col gap-1 h-full">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 min-w-0 text-[10px] uppercase tracking-wide text-indigo-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
-            <span className="truncate">{m.data?.name ?? "…"}</span>
+    <div className="plat-measure">
+      <div className="plat-measure__inner">
+        <div className="plat-measure__head">
+          <div className="plat-measure__title">
+            <span className="plat-measure__dot" />
+            <span>{m.data?.name ?? "…"}</span>
           </div>
           {!readOnly && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="plat-measure__controls">
               <button
                 type="button"
-                className="text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                className="plat-measure__ctl"
                 disabled={fontScale <= 0.6}
                 title="Smaller text"
                 onPointerDown={stop}
@@ -63,7 +63,7 @@ export function MeasureContent({
               </button>
               <button
                 type="button"
-                className="text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                className="plat-measure__ctl"
                 disabled={fontScale >= 3}
                 title="Larger text"
                 onPointerDown={stop}
@@ -77,7 +77,7 @@ export function MeasureContent({
               {measures.canRefresh && (
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-slate-700 disabled:opacity-50"
+                  className="plat-measure__ctl"
                   disabled={m.refreshing}
                   title="Refresh measure"
                   onPointerDown={stop}
@@ -86,33 +86,33 @@ export function MeasureContent({
                     void measures.refresh(node.measureId)
                   }}
                 >
-                  <RefreshCw size={12} className={m.refreshing ? "animate-spin" : ""} />
+                  <RefreshCw size={12} className={m.refreshing ? "plat-spin" : ""} />
                 </button>
               )}
             </div>
           )}
         </div>
 
-        <div className={`flex-1 flex min-h-0 ${isText ? "" : "items-center justify-center"}`}>
+        <div className={`plat-measure__body${isText ? "" : " plat-measure__body--value"}`}>
           {latest?.error || m.error ? (
-            <div className="flex items-center gap-2 text-rose-600 text-xs">
+            <div className="plat-measure__error">
               <AlertCircle size={14} />
-              <span className="truncate">{latest?.error ? "script error" : m.error}</span>
+              <span>{latest?.error ? "script error" : m.error}</span>
             </div>
           ) : isText ? (
             <div
-              className="flex-1 overflow-hidden whitespace-pre-line break-words text-left text-slate-800"
+              className="plat-measure__text"
               style={{ fontSize: 13 * fontScale, lineHeight: 1.5 }}
             >
               {pickText(result) ?? (stale ? "never refreshed" : "no value")}
             </div>
           ) : pickValue(result) === undefined ? (
-            <div className="text-slate-400 text-xs">
+            <div className="plat-measure__empty">
               {stale ? "never refreshed" : "no value"}
             </div>
           ) : (
             <div
-              className="font-semibold text-slate-900 tabular-nums truncate"
+              className="plat-measure__value"
               style={{ fontSize: 30 * fontScale }}
             >
               {formatValue(pickValue(result))}
@@ -120,11 +120,11 @@ export function MeasureContent({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
-          <span className="truncate">
+        <div className="plat-measure__foot">
+          <span className="plat-measure__label">
             {!isText && typeof result?.["label"] === "string" ? (result["label"] as string) : ""}
           </span>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="plat-measure__foot-actions">
             {note ? (
               <button
                 type="button"
@@ -134,8 +134,7 @@ export function MeasureContent({
                   setShowNote((v) => !v)
                 }}
                 title="details"
-                className={`inline-flex items-center gap-0.5 ${showNote ? "text-indigo-600" : "text-slate-400"} hover:text-indigo-600 font-medium`}
-                style={{ pointerEvents: "auto" }}
+                className={`plat-measure__note-btn${showNote ? " plat-measure__note-btn--open" : ""}`}
               >
                 <Info size={11} /> details
               </button>
@@ -148,8 +147,7 @@ export function MeasureContent({
                 onPointerDown={stop}
                 onClick={(e) => e.stopPropagation()}
                 title={linkObj.url}
-                className="inline-flex items-center gap-0.5 text-indigo-600 hover:text-indigo-800 hover:underline font-semibold"
-                style={{ pointerEvents: "auto" }}
+                className="plat-measure__link"
               >
                 {linkObj.label ?? "source"} ↗
               </a>
@@ -164,8 +162,7 @@ export function MeasureContent({
             e.stopPropagation()
             setShowNote(false)
           }}
-          className="absolute inset-1 z-10 bg-white/95 border border-indigo-200 rounded-md shadow-lg p-2 overflow-auto text-left text-[11px] leading-snug text-slate-600 whitespace-pre-line cursor-pointer"
-          style={{ pointerEvents: "auto" }}
+          className="plat-measure__note"
           title="click to close"
         >
           {note}

@@ -69,7 +69,7 @@ export function ContextMenu({
   return (
     <div
       ref={ref}
-      className="fixed z-[10000] min-w-[180px] bg-white rounded-lg border border-slate-200 shadow-xl py-1 text-sm text-slate-700"
+      className="plat-cmenu"
       style={{ left: clamped.x, top: clamped.y }}
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -126,22 +126,16 @@ function Item({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`w-full flex items-center justify-between gap-6 px-3 h-8 text-left ${
-        disabled
-          ? "text-slate-300 cursor-default"
-          : danger
-            ? "text-rose-600 hover:bg-rose-50"
-            : "hover:bg-indigo-50"
-      }`}
+      className={`plat-cmenu__item${disabled ? " plat-cmenu__item--disabled" : danger ? " plat-cmenu__item--danger" : ""}`}
     >
       <span>{label}</span>
-      {hint && <span className="text-[11px] text-slate-400">{hint}</span>}
+      {hint && <span className="plat-cmenu__hint">{hint}</span>}
     </button>
   )
 }
 
 function Sep() {
-  return <div className="my-1 border-t border-slate-100" />
+  return <div className="plat-cmenu__sep" />
 }
 
 function Submenu({ label, disabled, children }: { label: string; disabled?: boolean; children: React.ReactNode }) {
@@ -150,7 +144,7 @@ function Submenu({ label, disabled, children }: { label: string; disabled?: bool
   const triggerRef = useRef<HTMLDivElement>(null)
   if (disabled)
     return (
-      <div className="w-full flex items-center justify-between px-3 h-8 text-slate-300">
+      <div className="plat-cmenu__item plat-cmenu__item--disabled">
         <span>{label}</span>
         <ChevronRight size={14} />
       </div>
@@ -166,16 +160,16 @@ function Submenu({ label, disabled, children }: { label: string; disabled?: bool
     setOpen(true)
   }
   return (
-    <div className="relative" ref={triggerRef} onMouseEnter={onEnter} onMouseLeave={() => setOpen(false)}>
-      <div className="w-full flex items-center justify-between px-3 h-8 hover:bg-indigo-50 cursor-default">
+    <div className="plat-cmenu__subwrap" ref={triggerRef} onMouseEnter={onEnter} onMouseLeave={() => setOpen(false)}>
+      <div className="plat-cmenu__item" style={{ cursor: "default" }}>
         <span>{label}</span>
         <ChevronRight size={14} />
       </div>
       {open && (
         <div
-          className={`absolute min-w-[180px] bg-white rounded-lg border border-slate-200 shadow-xl py-1 ${
-            flip.left ? "right-full" : "left-full"
-          } ${flip.up ? "bottom-0 mb-[-4px]" : "top-0 mt-[-4px]"}`}
+          className={`plat-cmenu__sub ${flip.left ? "plat-cmenu__sub--left" : "plat-cmenu__sub--right"} ${
+            flip.up ? "plat-cmenu__sub--up" : "plat-cmenu__sub--down"
+          }`}
         >
           {children}
         </div>

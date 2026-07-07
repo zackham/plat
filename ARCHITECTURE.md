@@ -94,4 +94,15 @@ debounce-autosaves the whole doc (700ms) through a latest-wins serialized
 queue to `host.saveDoc`, with a final keepalive-style flush on unmount/tab
 close (`{final: true}`). Failed loads render an error screen — never an empty
 canvas, so a transient load failure can't clobber the stored doc on the next
-autosave.
+autosave. When the host implements the revision protocol (EMBEDDING.md), each
+save carries the base revision; a conflict freezes autosave behind a reload
+banner rather than overwriting the other writer.
+
+## Styling
+
+All chrome styling lives in `plat.css`: semantic classes (`.plat-toolbar`,
+`.plat-measure`, …) driven by `--plat-*` tokens scoped under `.plat-root`,
+with dark values keyed off `data-plat-theme`. Components carry no utility
+classes (enforced by the boundary test); geometry stays in inline styles, and
+chrome colors inside those inline styles reference tokens via `var()` so
+overlays re-theme too.

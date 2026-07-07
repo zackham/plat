@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import { ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Share2, Check } from "lucide-react"
-import { PlatHostContext, notifyError, usePlatHost } from "./host"
+import { PlatHostContext, isSaveConflict, notifyError, usePlatHost } from "./host"
 import type { PlatHost, PlatHandle } from "./host"
 import { MeasureDataContext, MeasureDataStore } from "./measureData"
 import {
@@ -87,6 +87,10 @@ interface Props {
     onClose: () => void
   }) => ReactNode
   newMeasureLabel?: string
+  /** Chrome theme: "light" (default), "dark", or "auto" (follow the OS).
+   *  Tokens only — node CONTENT colors are document data and don't re-theme.
+   *  Hosts can also override any --plat-* custom property. */
+  theme?: "light" | "dark" | "auto"
   /** Receives the imperative handle once the canvas is mounted — how outside
    *  chrome (panels, refresh buttons) talks to the canvas. */
   onReady?: (handle: PlatHandle) => void
@@ -97,6 +101,7 @@ export function Plat({
   readOnly = false,
   renderMeasureCreate,
   newMeasureLabel,
+  theme = "light",
   onReady,
 }: Props) {
   const effReadOnly = readOnly || !host.saveDoc
@@ -111,7 +116,20 @@ export function Plat({
   const [measureStore] = useState(() => new MeasureDataStore(host.measures))
   const [ready, setReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [conflict, setConflict] = useState(false)
+  const conflictRef = useRef(false)
+  // Base revision for the optional multi-writer protocol: the revision our
+  // edits started from. Stamped onto every save; refreshed from SaveDocResult.
+  const revisionRef = useRef<number | null>(null)
   const seededRef = useRef(false)
+
+  const adoptDoc = useCallback(
+    (doc: PlatDoc) => {
+      store.load(doc)
+      revisionRef.current = typeof doc.revision === "number" ? doc.revision : null
+    },
+    [store],
+  )
 
   // Serialized doc saver: latest doc wins, in order, one save in flight (a slow
   // seed-save can't clobber a fast first edit). Transport-level retries and
@@ -121,12 +139,22 @@ export function Plat({
   const pendingRef = useRef<PlatDoc | null>(null)
   const putDoc = useCallback(
     async (doc: PlatDoc, final = false) => {
-      if (!host.saveDoc) return
+      // After a conflict, never write again until the user reloads — the whole
+      // point is not to clobber whoever saved under us.
+      if (!host.saveDoc || conflictRef.current) return
+      const payload: PlatDoc =
+        revisionRef.current != null ? { ...doc, revision: revisionRef.current } : doc
       try {
-        await host.saveDoc(doc, final ? { final: true } : undefined)
+        const res = await host.saveDoc(payload, final ? { final: true } : undefined)
+        if (res && typeof res.revision === "number") revisionRef.current = res.revision
       } catch (e) {
+        if (isSaveConflict(e)) {
+          conflictRef.current = true
+          setConflict(true)
+          return
+        }
         // Adapter owns save-state reporting; during unload there's nothing to do.
-        if (!final) console.error("[canvas] save failed", e)
+        if (!final) console.error("[plat] save failed", e)
       }
     },
     [host],
@@ -165,7 +193,7 @@ export function Plat({
       .loadDoc()
       .then((doc) => {
         if (doc && Array.isArray(doc.nodes)) {
-          store.load(doc)
+          adoptDoc(doc)
         } else {
           const empty: PlatDoc = { format: "plat", version: 1, nodes: [] }
           store.load(empty)
@@ -176,7 +204,20 @@ export function Plat({
       .catch((e) => {
         setLoadError(e instanceof Error ? e.message : String(e))
       })
-  }, [host, store, effReadOnly, persist])
+  }, [host, store, effReadOnly, persist, adoptDoc])
+
+  // Conflict recovery: throw away local state, re-adopt the host's current doc,
+  // and resume saving. Called from the conflict banner's Reload button.
+  const reloadFromHost = useCallback(async () => {
+    try {
+      const doc = await host.loadDoc()
+      if (doc && Array.isArray(doc.nodes)) adoptDoc(doc)
+      conflictRef.current = false
+      setConflict(false)
+    } catch (e) {
+      notifyError(host, `Reload failed: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }, [host, adoptDoc])
 
   // Autosave: only on doc (nodes/order) change — NOT camera/selection/tool.
   // Flush the pending save on unmount / tab close so no edit is lost.
@@ -220,15 +261,15 @@ export function Plat({
 
   if (loadError) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-rose-500">
-        Failed to load canvas: {loadError}
+      <div className="plat-root" data-plat-theme={theme}>
+        <div className="plat-status plat-status--error">Failed to load canvas: {loadError}</div>
       </div>
     )
   }
   if (!ready) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
-        Loading canvas…
+      <div className="plat-root" data-plat-theme={theme}>
+        <div className="plat-status">Loading canvas…</div>
       </div>
     )
   }
@@ -241,8 +282,11 @@ export function Plat({
             readOnly={effReadOnly}
             renderMeasureCreate={renderMeasureCreate}
             newMeasureLabel={newMeasureLabel}
+            theme={theme}
             onReady={onReady}
             measureStore={measureStore}
+            conflict={conflict}
+            onReloadFromHost={() => void reloadFromHost()}
           />
         </PlatStoreContext.Provider>
       </MeasureDataContext.Provider>
@@ -290,12 +334,18 @@ function PlatInner({
   newMeasureLabel,
   onReady,
   measureStore,
+  theme = "light",
+  conflict = false,
+  onReloadFromHost,
 }: {
   readOnly: boolean
   renderMeasureCreate?: Props["renderMeasureCreate"]
   newMeasureLabel?: string
+  theme?: "light" | "dark" | "auto"
   onReady?: (handle: PlatHandle) => void
   measureStore: MeasureDataStore
+  conflict?: boolean
+  onReloadFromHost?: () => void
 }) {
   const store = useStore()
   const host = usePlatHost()
@@ -466,7 +516,7 @@ function PlatInner({
     const cx = u.x + u.w / 2
     const cy = u.y + u.h / 2
     store.setCamera({ x: r.width / 2 / z - cx, y: r.height / 2 / z - cy, z })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // deps intentionally narrow: refit only when the node COUNT changes
   }, [orderedNodes.length])
 
   // ── pointer handlers ──
@@ -1136,7 +1186,7 @@ function PlatInner({
       window.removeEventListener("keydown", onKey)
       window.removeEventListener("keyup", onUp)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // deps intentionally narrow: handlers read live state from the store
   }, [editingId, readOnly, focusedGroup])
 
   // nudge with debounced commit
@@ -1385,10 +1435,21 @@ function PlatInner({
     selectedIds.length === 1 && nodes[selectedIds[0]]?.type === "arrow"
 
   return (
-    <div className="flex-1 min-h-0 relative">
+    <div className="plat-root" data-plat-theme={theme}>
+      {conflict && (
+        <div className="plat-conflict">
+          <span>
+            This plat was changed elsewhere. Reload to get the latest — unsaved
+            changes here will be lost.
+          </span>
+          <button type="button" onClick={onReloadFromHost} className="plat-conflict__btn">
+            Reload
+          </button>
+        </div>
+      )}
       <div
         ref={containerRef}
-        className="absolute inset-0 overflow-hidden bg-slate-50 touch-none select-none"
+        className="plat-viewport"
         style={{
           cursor: panning
             ? "grabbing"
@@ -1490,7 +1551,7 @@ function PlatInner({
                     top: b.y,
                     width: b.w,
                     height: b.h,
-                    border: `${1.5 / camera.z}px solid #6366f1`,
+                    border: `${1.5 / camera.z}px solid var(--plat-selection)`,
                     borderRadius: isArrow(n) ? 0 : 2,
                     pointerEvents: "none",
                   }}
@@ -1523,8 +1584,8 @@ function PlatInner({
                     top: p.y - hs / 2,
                     width: hs,
                     height: hs,
-                    background: "#fff",
-                    border: `${1.5 / camera.z}px solid #6366f1`,
+                    background: "var(--plat-surface)",
+                    border: `${1.5 / camera.z}px solid var(--plat-selection)`,
                     borderRadius: "50%",
                     cursor: "pointer",
                     pointerEvents: "all",
@@ -1544,7 +1605,7 @@ function PlatInner({
                         top: info.midHandle.point.y - hs / 2,
                         width: hs,
                         height: hs,
-                        background: "#6366f1",
+                        background: "var(--plat-selection)",
                         borderRadius: 2,
                         cursor: info.midHandle.axis === "x" ? "ew-resize" : "ns-resize",
                         pointerEvents: "all",
@@ -1559,7 +1620,7 @@ function PlatInner({
               key={i}
               style={{
                 position: "absolute",
-                background: "#6366f1",
+                background: "var(--plat-selection)",
                 ...(g.axis === "x"
                   ? { left: g.pos, top: g.from, width: 1 / camera.z, height: g.to - g.from }
                   : { top: g.pos, left: g.from, height: 1 / camera.z, width: g.to - g.from }),
@@ -1574,8 +1635,8 @@ function PlatInner({
                 top: marquee.y,
                 width: marquee.w,
                 height: marquee.h,
-                border: `${1 / camera.z}px solid #6366f1`,
-                background: "rgba(99,102,241,0.08)",
+                border: `${1 / camera.z}px solid var(--plat-selection)`,
+                background: "var(--plat-selection-fill)",
               }}
             />
           )}
@@ -1594,9 +1655,9 @@ function PlatInner({
                     top: b.y,
                     width: b.w,
                     height: b.h,
-                    border: `${2 / camera.z}px solid #6366f1`,
+                    border: `${2 / camera.z}px solid var(--plat-selection)`,
                     borderRadius: 3,
-                    background: "rgba(99,102,241,0.06)",
+                    background: "var(--plat-marquee-fill)",
                     pointerEvents: "none",
                   }}
                 />
@@ -1622,8 +1683,8 @@ function PlatInner({
                     top: b.y + c.a.y * b.h - ds / 2,
                     width: ds,
                     height: ds,
-                    background: c.precise ? "#fff" : "#6366f1",
-                    border: `${bw}px solid #6366f1`,
+                    background: c.precise ? "var(--plat-surface)" : "var(--plat-selection)",
+                    border: `${bw}px solid var(--plat-selection)`,
                     borderRadius: "50%",
                     pointerEvents: "none",
                   }}
@@ -1646,7 +1707,7 @@ function PlatInner({
                     top: b.y - p,
                     width: b.w + 2 * p,
                     height: b.h + 2 * p,
-                    border: `${1 / camera.z}px dashed #94a3b8`,
+                    border: `${1 / camera.z}px dashed var(--plat-snap-guide)`,
                     pointerEvents: "none",
                   }}
                 />
@@ -1656,16 +1717,20 @@ function PlatInner({
       </div>
 
       {/* zoom / history controls */}
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur rounded-lg border border-slate-200 shadow-sm p-1 pointer-events-auto">
-        <Ctl title="Undo" onClick={() => store.undo()}><Undo2 size={15} /></Ctl>
-        <Ctl title="Redo" onClick={() => store.redo()}><Redo2 size={15} /></Ctl>
-        <div className="w-px h-5 bg-slate-200 mx-0.5" />
+      <div className="plat-controls">
+        {!readOnly && (
+          <>
+            <Ctl title="Undo" onClick={() => store.undo()}><Undo2 size={15} /></Ctl>
+            <Ctl title="Redo" onClick={() => store.redo()}><Redo2 size={15} /></Ctl>
+            <div className="plat-controls__sep" />
+          </>
+        )}
         <Ctl title="Zoom out" onClick={() => zoomBtn(-1)}><ZoomOut size={15} /></Ctl>
         <button
           type="button"
           title="Reset to 100%"
           onClick={() => zoomTo(1)}
-          className="text-[11px] tabular-nums text-slate-500 hover:text-slate-900 w-11 text-center"
+          className="plat-zoom-label"
         >
           {Math.round(camera.z * 100)}%
         </button>
@@ -1673,21 +1738,21 @@ function PlatInner({
         <Ctl title="Zoom to fit" onClick={() => fitView()}><Maximize size={15} /></Ctl>
         {!readOnly && host.share && (
           <>
-            <div className="w-px h-5 bg-slate-200 mx-0.5" />
+            <div className="plat-controls__sep" />
             <Ctl
               title={shareState === "copied" ? "Link copied!" : "Copy public read-only link"}
               onClick={() => void onShare()}
             >
               {shareState === "copied" ? (
-                <Check size={15} className="text-emerald-600" />
+                <Check size={15} className="plat-ctl--success" />
               ) : shareState === "error" ? (
-                <Share2 size={15} className="text-rose-600" />
+                <Share2 size={15} className="plat-ctl--danger" />
               ) : (
-                <Share2 size={15} className={shareState === "sharing" ? "animate-pulse" : ""} />
+                <Share2 size={15} className={shareState === "sharing" ? "plat-pulse" : ""} />
               )}
             </Ctl>
             {shareState === "copied" && (
-              <span className="text-[11px] text-emerald-600 pr-1">copied</span>
+              <span className="plat-controls__hint">copied</span>
             )}
           </>
         )}
@@ -1842,7 +1907,7 @@ function FrameView({
         height: frame.h,
         overflow: "hidden",
         borderRadius: 6,
-        background: "rgba(248,250,252,0.5)",
+        background: "var(--plat-frame-fill)",
         pointerEvents: "none",
       }}
     >
@@ -1939,11 +2004,11 @@ function FrameChrome({
             width: frame.w,
             fontSize: 13 / zoom,
             fontWeight: 600,
-            color: "#475569",
-            border: `${1 / zoom}px solid #6366f1`,
+            color: "var(--plat-text-secondary)",
+            border: `${1 / zoom}px solid var(--plat-selection)`,
             borderRadius: 3 / zoom,
             padding: `${1 / zoom}px ${4 / zoom}px`,
-            background: "white",
+            background: "var(--plat-surface)",
             pointerEvents: "all",
           }}
         />
@@ -1958,7 +2023,7 @@ function FrameChrome({
             maxWidth: frame.w,
             fontSize: 13 / zoom,
             fontWeight: 600,
-            color: "#64748b",
+            color: "var(--plat-text-muted)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -1977,7 +2042,7 @@ function FrameChrome({
           top: frame.y,
           width: frame.w,
           height: frame.h,
-          border: `${1.5 / zoom}px solid #cbd5e1`,
+          border: `${1.5 / zoom}px solid var(--plat-frame-border)`,
           borderRadius: 6,
           pointerEvents: "none",
         }}
@@ -1991,7 +2056,7 @@ function Ctl({ title, onClick, children }: { title: string; onClick: () => void;
     <button
       type="button"
       title={title}
-      className="p-1.5 rounded hover:bg-slate-100 text-slate-600"
+      className="plat-ctl"
       onClick={onClick}
     >
       {children}
@@ -2030,7 +2095,7 @@ function SelectionOverlay({
         top: bounds.y,
         width: bounds.w,
         height: bounds.h,
-        border: `${1.5 / zoom}px solid #6366f1`,
+        border: `${1.5 / zoom}px solid var(--plat-selection)`,
         pointerEvents: "none",
       }}
     >
@@ -2045,8 +2110,8 @@ function SelectionOverlay({
               top: bounds.h * handle.cy - hs / 2,
               width: hs,
               height: hs,
-              background: "#fff",
-              border: `${1 / zoom}px solid #6366f1`,
+              background: "var(--plat-surface)",
+              border: `${1 / zoom}px solid var(--plat-selection)`,
               borderRadius: hs * 0.25,
               cursor: handle.cursor,
               pointerEvents: "all",
@@ -2086,11 +2151,11 @@ function TextEditor({
         height: "100%",
         resize: "none",
         border: "none",
-        outline: "2px solid #6366f1",
-        background: "white",
+        outline: "2px solid var(--plat-selection)",
+        background: "var(--plat-surface)",
         fontSize: node.fontSize,
         lineHeight: 1.3,
-        color: node.color ?? "#0f172a",
+        color: node.color ?? "var(--plat-text)",
         textAlign: node.align ?? "left",
         padding: 2,
         pointerEvents: "all",

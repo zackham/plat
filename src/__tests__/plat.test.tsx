@@ -7,6 +7,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { Plat } from "../Plat"
+import { PlatSaveConflictError } from "../index"
 import type { PlatDoc, PlatHost, PlatHandle, MeasureData, SaveDocOptions } from "../index"
 
 const mockSaveDoc = () => vi.fn(async (_doc: PlatDoc, _opts?: SaveDocOptions) => {})
@@ -139,5 +140,60 @@ describe("Plat + PlatHost", () => {
       },
       { timeout: 2500 },
     )
+  })
+
+  it("revision protocol: stamps the base revision and adopts the host's new one", async () => {
+    let handle: PlatHandle | null = null
+    const seen: (number | undefined)[] = []
+    let rev = 7
+    const host: PlatHost = {
+      loadDoc: async () => ({ ...textDoc, revision: rev }),
+      saveDoc: async (doc) => {
+        seen.push(doc.revision)
+        rev += 1
+        return { revision: rev }
+      },
+      measures: { get: async (id) => ({ id, name: "m", latest: null }) },
+    }
+    render(<Plat host={host} onReady={(h) => (handle = h)} />)
+    await screen.findByText("hello from the host")
+
+    handle!.insertMeasure("m_00000001")
+    await waitFor(() => expect(seen.length).toBe(1), { timeout: 2500 })
+    expect(seen[0]).toBe(7) // base = loaded revision
+
+    handle!.insertMeasure("m_00000002")
+    await waitFor(() => expect(seen.length).toBe(2), { timeout: 2500 })
+    expect(seen[1]).toBe(8) // base = revision returned by the previous save
+  })
+
+  it("a save conflict freezes autosave and shows the reload banner", async () => {
+    let handle: PlatHandle | null = null
+    let saves = 0
+    let docOnHost: PlatDoc = { ...textDoc, revision: 1 }
+    const host: PlatHost = {
+      loadDoc: async () => docOnHost,
+      saveDoc: async () => {
+        saves += 1
+        throw new PlatSaveConflictError()
+      },
+      measures: { get: async (id) => ({ id, name: "m", latest: null }) },
+    }
+    render(<Plat host={host} onReady={(h) => (handle = h)} />)
+    await screen.findByText("hello from the host")
+
+    handle!.insertMeasure("m_00000003")
+    expect(await screen.findByText(/changed elsewhere/, undefined, { timeout: 2500 })).toBeInTheDocument()
+    const after = saves
+
+    // further edits must NOT reach the host while conflicted
+    handle!.insertMeasure("m_00000004")
+    await new Promise((r) => setTimeout(r, 1200))
+    expect(saves).toBe(after)
+
+    // reload re-adopts the host doc and clears the banner
+    docOnHost = { ...textDoc, revision: 9 }
+    screen.getByRole("button", { name: "Reload" }).click()
+    await waitFor(() => expect(screen.queryByText(/changed elsewhere/)).not.toBeInTheDocument())
   })
 })
