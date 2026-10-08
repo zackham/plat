@@ -13,7 +13,7 @@ export interface Vec {
   y: number
 }
 
-/** Box nodes share this shape (image/text/measure/group). */
+/** Box nodes share this shape (image/video/text/measure/group). */
 export interface BoxBase {
   id: string
   x: number
@@ -36,6 +36,40 @@ export interface ImageNode extends BoxBase {
   src: string
   assetId?: string
   name?: string
+}
+
+/** Playback behavior of a video node. "loop" = muted autoplay loop while the
+ *  node is on screen (GIF-like, for short silent clips); "click" = poster
+ *  frame + play button. */
+export type VideoPlayback = "loop" | "click"
+
+/** Clips at or under this length with no audio default to "loop". */
+export const VIDEO_LOOP_MAX_SECONDS = 30
+
+export interface VideoNode extends BoxBase {
+  type: "video"
+  /** host asset URL of a browser-playable file (H.264 MP4 is the safe choice) */
+  src: string
+  /** still frame shown before playback and used by PNG export */
+  poster?: string
+  assetId?: string
+  name?: string
+  /** seconds; with `hasAudio` it picks the default playback mode */
+  duration?: number
+  hasAudio?: boolean
+  /** explicit playback mode; absent ⇒ derived (see videoPlayback) */
+  playback?: VideoPlayback
+}
+
+/** Effective playback mode: explicit `playback` wins; otherwise short silent
+ *  clips loop and everything else (long, has audio, or unknown) is click. */
+export function videoPlayback(
+  n: Pick<VideoNode, "playback" | "duration" | "hasAudio">,
+): VideoPlayback {
+  if (n.playback) return n.playback
+  return n.duration != null && n.duration <= VIDEO_LOOP_MAX_SECONDS && n.hasAudio === false
+    ? "loop"
+    : "click"
 }
 
 export interface TextNode extends BoxBase {
@@ -169,6 +203,7 @@ export const isCustomNode = (n: AnyNode): n is CustomNode =>
 
 export type BoxNode =
   | ImageNode
+  | VideoNode
   | TextNode
   | MeasureNode
   | GroupNode

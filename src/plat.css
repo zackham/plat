@@ -846,3 +846,116 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* ── video node ─────────────────────────────────────────── */
+/* Player chrome sits on top of footage, so it uses a fixed dark scrim in
+ * both themes rather than surface tokens. */
+
+.plat-video {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #000;
+  user-select: none;
+}
+.plat-video__media {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: fill; /* like images: the box carries the aspect */
+  pointer-events: none;
+}
+.plat-video__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 0 4px; /* optical centering of the triangle */
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+.plat-video__play:hover {
+  background: rgba(15, 23, 42, 0.88);
+  transform: scale(1.06);
+}
+.plat-video__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 8px 6px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.66), rgba(0, 0, 0, 0));
+  color: #fff;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.plat-video:hover .plat-video__bar,
+.plat-video:focus-within .plat-video__bar,
+.plat-video--click.is-started:not(.is-playing) .plat-video__bar {
+  opacity: 1;
+}
+/* until a click clip is started, the big play button is the only control */
+.plat-video--click:not(.is-started) .plat-video__bar {
+  display: none;
+}
+@media (hover: none) {
+  .plat-video .plat-video__bar {
+    opacity: 1;
+  }
+}
+.plat-video__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.plat-video__btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.plat-video__time {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.plat-video__scrub {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  accent-color: #fff;
+  cursor: pointer;
+}
+.plat-video__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

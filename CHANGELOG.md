@@ -3,6 +3,24 @@
 Notable changes to plat. Format loosely follows [Keep a Changelog](https://keepachangelog.com);
 versions follow semver (pre-1.0: minor bumps may break).
 
+## [0.4.0] — 2026-10-08
+
+Video nodes.
+
+### Added
+
+- **`video` node type** (built in). A real `<video>` in the box: short silent
+  clips autoplay muted and loop while on screen, like a GIF; longer clips or
+  clips with audio show a poster and a play button. Both get a hover control
+  bar (play/pause, scrub, mute, fullscreen) built from interactive regions,
+  so the body still drags in the editor and pans in view mode. Playing clips
+  pause when they leave the viewport. The style panel toggles loop/click and
+  downloads the file. FORMAT.md §3.1a.
+- `uploadAsset` may now resolve an `UploadedAsset` (`src` plus optional
+  `poster`, `width`/`height`, `duration`, `hasAudio`), so a transcoding host
+  can report what it actually stored. The insert button accepts video.
+- PNG export draws a video's poster frame.
+
 ## [0.3.0] — 2026-07-06
 
 The platform release: the content layer opens up. plat now hosts node types

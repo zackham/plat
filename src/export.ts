@@ -1,11 +1,11 @@
 // Rasterize a selection to a PNG (at on-screen 100% size) and copy to the
-// system clipboard, plus download-original for image nodes. Images render
+// system clipboard, plus download-original for image and video nodes. Images render
 // pixel-exact (the primary round-trip use case); text/measure are approximated
 // onto the canvas.
 
 import type { PlatStore } from "./store"
 import { boxNode, unionBoxes } from "./geometry"
-import { isArrow, type BoxNode, type ImageNode, type TextNode } from "./types"
+import { isArrow, type BoxNode, type ImageNode, type TextNode, type VideoNode } from "./types"
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -59,6 +59,22 @@ export async function renderSelectionPng(store: PlatStore): Promise<Blob | null>
       } catch {
         /* skip unloadable image */
       }
+    } else if (n.type === "video") {
+      // the poster frame stands in for the clip; no poster ⇒ a dark box
+      const poster = (n as VideoNode).poster
+      let drawn = false
+      if (poster) {
+        try {
+          ctx.drawImage(await loadImage(poster), x, y, n.w, n.h)
+          drawn = true
+        } catch {
+          /* fall through to the placeholder */
+        }
+      }
+      if (!drawn) {
+        ctx.fillStyle = "#0f172a"
+        ctx.fillRect(x, y, n.w, n.h)
+      }
     } else if (n.type === "text") {
       const t = n as TextNode
       ctx.fillStyle = t.color ?? "#0f172a"
@@ -102,20 +118,24 @@ function triggerDownload(url: string, filename: string) {
   a.remove()
 }
 
-/** Download the original source file for a single selected image node. */
+const isMedia = (n: { type: string } | undefined): boolean =>
+  n?.type === "image" || n?.type === "video"
+
+/** Download the stored source file for a single selected image or video node. */
 export async function downloadOriginal(store: PlatStore): Promise<boolean> {
   const s = store.getState()
-  const imgs = s.selectedIds
+  const media = s.selectedIds
     .map((id) => s.nodes[id])
-    .filter((n): n is ImageNode => !!n && !isArrow(n) && n.type === "image")
-  if (imgs.length !== 1) return false
-  const n = imgs[0]
+    .filter((n): n is ImageNode | VideoNode => !!n && !isArrow(n) && isMedia(n))
+  if (media.length !== 1) return false
+  const n = media[0]
   try {
     const res = await fetch(n.src)
     const blob = await res.blob()
-    const ext = (blob.type.split("/")[1] || "png").split("+")[0]
+    const fallback = n.type === "video" ? "mp4" : "png"
+    const ext = (blob.type.split("/")[1] || fallback).split("+")[0]
     const url = URL.createObjectURL(blob)
-    triggerDownload(url, n.name || `image.${ext}`)
+    triggerDownload(url, n.name || `${n.type}.${ext}`)
     setTimeout(() => URL.revokeObjectURL(url), 5000)
     return true
   } catch {
@@ -125,6 +145,5 @@ export async function downloadOriginal(store: PlatStore): Promise<boolean> {
 
 export function canDownloadOriginal(store: PlatStore): boolean {
   const s = store.getState()
-  const imgs = s.selectedIds.filter((id) => s.nodes[id]?.type === "image")
-  return imgs.length === 1 && s.selectedIds.length === 1
+  return s.selectedIds.length === 1 && isMedia(s.nodes[s.selectedIds[0]])
 }

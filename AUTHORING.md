@@ -31,6 +31,7 @@ The general loop:
 |---|---|
 | `text` | `text`, `fontSize`; box clips (no auto-grow) — size `w/h` to fit |
 | `image` | `src` (host asset URL); stretched to `w`×`h`, so set them to the image's aspect |
+| `video` | `src`, `poster?`, `duration?`, `hasAudio?`, `playback?` (`loop`\|`click`); stretched like an image. Short silent clips loop by default (FORMAT.md §3.1a) |
 | `measure` | `measureId` — a pointer; data comes from the host at render time |
 | `link` | `url`, `label?` — clickable pill |
 | `frame` | `name`, optional `layout` → titled, bordered, clipping container |
@@ -119,4 +120,4 @@ what the card will show.
 - ids unique; flow children have ascending `index` strings
 - ran `settleDoc` after any layout-container change
 - text boxes sized to their content (they clip)
-- image `w/h` matches the source aspect (src is stretched)
+- image and video `w/h` match the source aspect (src is stretched)

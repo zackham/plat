@@ -13,6 +13,7 @@ export type {
   MeasureSummary,
   SaveDocOptions,
   SaveDocResult,
+  UploadedAsset,
 } from "./host"
 
 // Runtime controller — what onReady hands out, also reachable from custom
@@ -36,8 +37,17 @@ export type {
   LinkNode,
   MeasureNode,
   TextNode,
+  VideoNode,
+  VideoPlayback,
 } from "./types"
-export { isArrow, isBox, isContainer, isLayoutContainer } from "./types"
+export {
+  isArrow,
+  isBox,
+  isContainer,
+  isLayoutContainer,
+  videoPlayback,
+  VIDEO_LOOP_MAX_SECONDS,
+} from "./types"
 
 // Programmatic authoring: settleDoc is the headless auto-layout settle every
 // doc-writing process needs (see AUTHORING.md); the lower-level engine pieces

@@ -79,7 +79,7 @@ optional; omit one and its UI disappears:
 | omitted | effect |
 |---|---|
 | `saveDoc` | view-only |
-| `uploadAsset` | no image insert / paste |
+| `uploadAsset` | no image/video insert / paste |
 | `measures` / `measures.refresh` / `measures.list` | no live-data cards / refresh / picker |
 | `share` | no share button |
 

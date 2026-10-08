@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import { ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Share2, Check } from "lucide-react"
 import { PlatHostContext, isSaveConflict, notifyError, usePlatHost } from "./host"
-import type { PlatHost } from "./host"
+import type { PlatHost, UploadedAsset } from "./host"
 import { PlatApi, PlatApiContext, usePlatApi } from "./api"
 import { MeasureDataContext, MeasureDataStore } from "./measureData"
 import {
@@ -1410,23 +1410,40 @@ function PlatInner({
       store.addNodes([{ ...node, x: c.x - w / 2, y: c.y - h / 2 } as AnyNode], true),
     )
   }
-  const insertImageFile = async (file: File) => {
+  const insertMediaFile = async (file: File) => {
     if (!host.uploadAsset) return
-    const dims = await imageDims(file)
-    let src: string
+    const isVideo = file.type.startsWith("video/")
+    const local: { w: number; h: number; duration?: number } = isVideo
+      ? await videoMeta(file)
+      : await imageDims(file)
+    let up: UploadedAsset
     try {
-      ;({ src } = await host.uploadAsset(file, file.name))
+      up = await host.uploadAsset(file, file.name)
     } catch (e) {
-      notifyError(host, `Image upload failed: ${e instanceof Error ? e.message : e}`)
+      notifyError(
+        host,
+        `${isVideo ? "Video" : "Image"} upload failed: ${e instanceof Error ? e.message : e}`,
+      )
       return
     }
-    const w = Math.min(dims.w, 600)
-    const h = (w / dims.w) * dims.h
-    addAtCenter(
-      { id: genId(), type: "image", x: 0, y: 0, w, h, index: "", parentId: null, src } as AnyNode,
-      w,
-      h,
-    )
+    // host-reported dims win: a transcoding host may have resized the file
+    const dw = up.width || local.w
+    const dh = up.height || local.h
+    const w = Math.min(dw, 600)
+    const h = (w / dw) * dh
+    const base = { id: genId(), x: 0, y: 0, w, h, index: "", parentId: null, src: up.src }
+    const duration = up.duration ?? local.duration
+    const node: AnyNode = isVideo
+      ? {
+          ...base,
+          type: "video",
+          name: file.name,
+          ...(up.poster ? { poster: up.poster } : {}),
+          ...(duration != null ? { duration } : {}),
+          ...(up.hasAudio != null ? { hasAudio: up.hasAudio } : {}),
+        }
+      : { ...base, type: "image" }
+    addAtCenter(node, w, h)
   }
   const insertMeasure = (measureId: string) => {
     addAtCenter(
@@ -1852,11 +1869,11 @@ function PlatInner({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         style={{ display: "none" }}
         onChange={(e) => {
           const f = e.target.files?.[0]
-          if (f) void insertImageFile(f)
+          if (f) void insertMediaFile(f)
           e.target.value = ""
         }}
       />
@@ -2244,6 +2261,27 @@ function TextEditor({
       }}
     />
   )
+}
+
+async function videoMeta(file: File): Promise<{ w: number; h: number; duration?: number }> {
+  return new Promise((resolve) => {
+    const v = document.createElement("video")
+    const url = URL.createObjectURL(file)
+    const done = (r: { w: number; h: number; duration?: number }) => {
+      URL.revokeObjectURL(url)
+      resolve(r)
+    }
+    v.preload = "metadata"
+    v.muted = true
+    v.onloadedmetadata = () =>
+      done({
+        w: v.videoWidth || 480,
+        h: v.videoHeight || 270,
+        duration: Number.isFinite(v.duration) ? v.duration : undefined,
+      })
+    v.onerror = () => done({ w: 480, h: 270 })
+    v.src = url
+  })
 }
 
 async function imageDims(file: File): Promise<{ w: number; h: number }> {

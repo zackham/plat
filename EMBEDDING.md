@@ -27,7 +27,7 @@ Optional members are capabilities; omitting one removes its UI:
 | omitted | effect |
 |---|---|
 | `saveDoc` | view-only (edit surface disabled entirely) |
-| `uploadAsset` | no image insert button, no paste-image |
+| `uploadAsset` | no image/video insert button, no paste-image |
 | `measures` | measure nodes render "unavailable" |
 | `measures.refresh` | no per-measure refresh button |
 | `measures.list` | no insert-measure picker |
@@ -48,7 +48,12 @@ nothing else. The full editor and the share viewer are the same component.
   job. `{final: true}` means the page is unloading: use a keepalive-capable
   transport, skip retries and UI.
 - **`uploadAsset`**: return a URL that stays resolvable for future loads —
-  it is stored verbatim in the doc as the image node's `src`.
+  it is stored verbatim in the doc as the image or video node's `src`. The
+  file picker also accepts `video/*`. For video, honor HTTP Range requests
+  (seeking), and optionally return `poster`, `width`/`height`, `duration`
+  and `hasAudio` (`UploadedAsset`): a host that transcodes should, since its
+  output can differ from the original file. Anything omitted is read from
+  the file in the browser; without `hasAudio` a clip defaults to click-to-play.
 - **`measures.refresh`**: recompute, then return the fresh `MeasureData`
   (the library keeps the stale value visible while it runs).
 

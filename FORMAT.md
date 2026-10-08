@@ -43,7 +43,7 @@ Every non-arrow node ("box node") shares `BoxBase`:
 | field | type | req | meaning |
 |---|---|---|---|
 | `id` | string | ✓ | unique node id. Convention: `shape:<rand>` (any unique string works). |
-| `type` | string | ✓ | `image` \| `text` \| `measure` \| `link` \| `group` \| `frame` |
+| `type` | string | ✓ | `image` \| `video` \| `text` \| `measure` \| `link` \| `group` \| `frame` |
 | `x`,`y` | number | ✓ | absolute top-left, page units |
 | `w`,`h` | number | ✓ | size, page units. Images are `objectFit:fill` — the src is stretched to `w`×`h`, so set `w/h` to control aspect. |
 | `index` | string | ✓ | **sortable fractional index.** In an auto-layout frame this is the **flow order** of the child (see §4). It is **NOT z-order.** For free nodes it's currently unused for ordering — set `""` or any value. |
@@ -64,6 +64,21 @@ Arrows have their own shape (§3.7).
 ```
 `src` is stretched to `w`×`h`. Upload blobs via `PUT …/assets/<assetId>`; reuse a
 card's node id when replacing so bound arrows stay attached.
+
+### 3.1a video
+```jsonc
+{ "id","type":"video","x","y","w","h","index","parentId"?,
+  "src": "/api/…/assets/<assetId>",          // browser-playable; H.264 MP4 is the safe choice
+  "poster"?: "/api/…/assets/<assetId>-poster", // still frame: shown before play, used by PNG export
+  "duration"?: 42.5, "hasAudio"?: false,
+  "playback"?: "loop"|"click", "assetId"?: "asset:…", "name"?: "label" }
+```
+Stretched to `w`×`h` like an image, so set `w/h` to the source aspect. Playback:
+`"loop"` autoplays muted and loops while the node is on screen (GIF-like);
+`"click"` shows the poster and a play button. Absent `playback` is derived: clips
+of `VIDEO_LOOP_MAX_SECONDS` (30s) or less with `hasAudio: false` loop, everything
+else is click. Any playing clip pauses when it scrolls off screen. Serve `src`
+with HTTP Range support so the scrubber can seek.
 
 ### 3.2 text
 ```jsonc

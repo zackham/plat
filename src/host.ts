@@ -82,6 +82,20 @@ export function isSaveConflict(e: unknown): boolean {
   )
 }
 
+/** What `uploadAsset` resolves to. Only `src` is required. For video, a host
+ *  that inspects or transcodes the upload can also return the poster frame,
+ *  the stored dimensions, the duration and whether it has audio; the editor
+ *  falls back to reading metadata in the browser for anything omitted. */
+export interface UploadedAsset {
+  src: string
+  poster?: string
+  width?: number
+  height?: number
+  /** seconds (video) */
+  duration?: number
+  hasAudio?: boolean
+}
+
 export interface PlatHost {
   /** Load the document. Resolve null for a brand-new canvas (the editor then
    *  creates and persists an empty doc). Reject ⇒ a load-error screen; the
@@ -96,9 +110,10 @@ export interface PlatHost {
    *  and otherwise stores the doc under a new revision, returning it as
    *  `{revision}`. Hosts that don't care ignore all of this. */
   saveDoc?(doc: PlatDoc, opts?: SaveDocOptions): Promise<SaveDocResult | void>
-  /** Store an image blob, return a URL the canvas can render (must remain
-   *  resolvable for future loads). Omit ⇒ image insert/paste disabled. */
-  uploadAsset?(blob: Blob, name?: string): Promise<{ src: string }>
+  /** Store an image or video blob, return a URL the canvas can render (must
+   *  remain resolvable for future loads). Video URLs should honor HTTP Range
+   *  requests so playback can seek. Omit ⇒ media insert/paste disabled. */
+  uploadAsset?(blob: Blob, name?: string): Promise<UploadedAsset>
   /** Measure data source. Omit ⇒ measure nodes render "unavailable". */
   measures?: MeasureSource
   /** Create (or reuse) a public share link for this canvas. */

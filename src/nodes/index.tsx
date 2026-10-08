@@ -1,6 +1,7 @@
 import type { AnyNode, ImageNode, TextNode, LinkNode } from "../types"
 import type { PlatNodeType } from "../nodeTypes"
 import { MeasureContent } from "./MeasureNode"
+import { VideoContent } from "./VideoNode"
 
 export interface NodeContentProps {
   node: AnyNode
@@ -116,6 +117,7 @@ function LinkContent({ node, readOnly }: NodeContentProps) {
 // group/frame/arrow are structural — owned by the engine, not listed here.
 export const BUILTIN_NODE_TYPES: PlatNodeType[] = [
   { type: "image", render: ImageContent, defaultSize: { w: 400, h: 300 } },
+  { type: "video", render: VideoContent, defaultSize: { w: 480, h: 270 } },
   {
     type: "text",
     render: TextContent,

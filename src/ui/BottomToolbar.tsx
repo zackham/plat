@@ -90,7 +90,7 @@ export function BottomToolbar({
         {onInsertImage && (
           <button
             type="button"
-            title="Insert image"
+            title="Insert image or video"
             onClick={onInsertImage}
             className="plat-tool"
           >

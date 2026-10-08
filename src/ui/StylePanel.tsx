@@ -16,6 +16,8 @@ import {
   Group as GroupIcon,
   Ungroup as UngroupIcon,
   Frame as FrameIcon,
+  Play,
+  Repeat,
 } from "lucide-react"
 import {
   align,
@@ -43,6 +45,8 @@ import {
   type FrameNode,
   type LayoutProps,
   type TextNode,
+  type VideoNode,
+  videoPlayback,
 } from "../types"
 
 const COLORS = ["#334155", "#6366f1", "#ef4444", "#f59e0b", "#10b981", "#0ea5e9"]
@@ -120,6 +124,29 @@ export function StylePanel({ store }: { store: PlatStore }) {
             <button type="button" onClick={() => downloadOriginal(store)} className="plat-btn">
               Download original
             </button>
+          )}
+          {single.type === "video" && (
+            <>
+              <div className="plat-panel__row">
+                <IconBtn
+                  active={videoPlayback(single as VideoNode) === "loop"}
+                  title="Autoplay muted, loop while on screen"
+                  onClick={() => patch({ playback: "loop" } as Partial<AnyNode>)}
+                >
+                  <Repeat size={15} />
+                </IconBtn>
+                <IconBtn
+                  active={videoPlayback(single as VideoNode) === "click"}
+                  title="Poster frame with a play button"
+                  onClick={() => patch({ playback: "click" } as Partial<AnyNode>)}
+                >
+                  <Play size={15} />
+                </IconBtn>
+              </div>
+              <button type="button" onClick={() => downloadOriginal(store)} className="plat-btn">
+                Download video
+              </button>
+            </>
           )}
           {single.type === "frame" && (
             <LayoutSection store={store} frame={single as FrameNode} />
