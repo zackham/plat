@@ -108,6 +108,10 @@ interface Props {
   /** Receives the imperative handle once the canvas is mounted — how outside
    *  chrome (panels, refresh buttons) talks to the canvas. */
   onReady?: (api: PlatApi) => void
+  /** Node ids to frame on first load instead of fitting the whole canvas —
+   *  the receiving half of `host.linkTo`. Ids missing from the doc are
+   *  ignored; if none resolve, the canvas fits as usual and the host is told. */
+  focus?: string[]
 }
 
 export function Plat({
@@ -118,6 +122,7 @@ export function Plat({
   theme = "light",
   nodeTypes,
   onReady,
+  focus,
 }: Props) {
   const effReadOnly = readOnly || !host.saveDoc
 
@@ -304,6 +309,7 @@ export function Plat({
             newMeasureLabel={newMeasureLabel}
             theme={theme}
             onReady={onReady}
+            focus={focus}
             conflict={conflict}
             onReloadFromHost={() => void reloadFromHost()}
           />
@@ -354,6 +360,7 @@ function PlatInner({
   renderMeasureCreate,
   newMeasureLabel,
   onReady,
+  focus,
   theme = "light",
   conflict = false,
   onReloadFromHost,
@@ -363,6 +370,7 @@ function PlatInner({
   newMeasureLabel?: string
   theme?: "light" | "dark" | "auto"
   onReady?: (api: PlatApi) => void
+  focus?: string[]
   conflict?: boolean
   onReloadFromHost?: () => void
 }) {
@@ -389,7 +397,8 @@ function PlatInner({
   const order = useSel(store, selOrder)
   const selectedIds = useSel(store, selSelected)
   const tool = useSel(store, selTool)
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  // `linkTargets` set ⇒ the read-only menu, which has no selection to act on
+  const [menu, setMenu] = useState<{ x: number; y: number; linkTargets?: string[] } | null>(null)
   const [measureCreateOpen, setMeasureCreateOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -523,11 +532,20 @@ function PlatInner({
 
   // ── camera fit on first ready ──
   const fittedRef = useRef(false)
+  // focus applies to the first fit only; later refits (fitView, node count) frame everything
+  const focusUsedRef = useRef(false)
   useEffect(() => {
     if (fittedRef.current) return
     const r = rect()
     if (!r) return
-    const boxes = orderedNodes.map((n) => nodeBox(n, byId)).filter((b) => b.w >= 0 && b.h >= 0)
+    const pending = focusUsedRef.current ? [] : (focus ?? [])
+    focusUsedRef.current = true
+    const focused = pending.map((id) => nodes[id]).filter((n) => n && !isArrow(n))
+    if (pending.length && !focused.length && orderedNodes.length) {
+      notifyError(host, "The linked item is no longer on this canvas.")
+    }
+    const fitTo = focused.length ? focused : orderedNodes
+    const boxes = fitTo.map((n) => nodeBox(n, byId)).filter((b) => b.w >= 0 && b.h >= 0)
     const u = unionBoxes(boxes)
     if (!u) {
       fittedRef.current = true
@@ -535,7 +553,9 @@ function PlatInner({
     }
     fittedRef.current = true
     const pad = 0.85
-    const z = Math.max(0.1, Math.min(2, Math.min(r.width / (u.w || 1), r.height / (u.h || 1)) * pad))
+    // a linked node frames at most 1:1 — a lone small card at 2x reads as a bug
+    const maxZ = focused.length ? 1 : 2
+    const z = Math.max(0.1, Math.min(maxZ, Math.min(r.width / (u.w || 1), r.height / (u.h || 1)) * pad))
     const cx = u.x + u.w / 2
     const cy = u.y + u.h / 2
     store.setCamera({ x: r.width / 2 / z - cx, y: r.height / 2 / z - cy, z })
@@ -1470,6 +1490,15 @@ function PlatInner({
     api._attach({ getRect: () => containerRef.current?.getBoundingClientRect() ?? null })
     onReady?.(api)
   }, [api, onReady])
+  const copyLink = (ids: string[]) => {
+    const targets = ids.filter((id) => nodes[id] && !isArrow(nodes[id]))
+    if (!targets.length || !host.linkTo) return
+    const url = host.linkTo(targets)
+    navigator.clipboard
+      .writeText(url)
+      .then(() => host.notify?.("success", "Link copied"))
+      .catch((e) => notifyError(host, `Couldn't copy link: ${e instanceof Error ? e.message : String(e)}`))
+  }
   const cut = () => {
     copy()
     const sel = withGroupMembers(store.getState().selectedIds)
@@ -1557,9 +1586,13 @@ function PlatInner({
         }}
         onContextMenu={(e) => {
           e.preventDefault()
-          if (readOnly) return
           const page = toPage(e.clientX, e.clientY)
           const hit = hitTest(page, [...orderedNodes].reverse(), byId, 8 / camera.z)
+          if (readOnly) {
+            if (!host.linkTo || !hit || isArrow(nodes[hit])) return
+            setMenu({ x: e.clientX, y: e.clientY, linkTargets: [selectionTarget(hit)] })
+            return
+          }
           if (hit) {
             const t = selectionTarget(hit)
             if (!selectedSet.has(t)) store.setSelection([t])
@@ -1852,6 +1885,7 @@ function PlatInner({
           store={store}
           pos={menu}
           onClose={() => setMenu(null)}
+          linkTargets={menu.linkTargets}
           actions={{
             cut,
             copy,
@@ -1863,6 +1897,7 @@ function PlatInner({
             },
             copyPng: () => void copySelectionAsPng(store),
             download: () => void downloadOriginal(store),
+            copyLink: host.linkTo ? copyLink : undefined,
           }}
         />
       )}

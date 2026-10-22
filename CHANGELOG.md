@@ -3,6 +3,18 @@
 Notable changes to plat. Format loosely follows [Keep a Changelog](https://keepachangelog.com);
 versions follow semver (pre-1.0: minor bumps may break).
 
+## [0.5.0] — 2026-10-22
+
+Links to frames, nodes and selections.
+
+### Added
+
+- `host.linkTo(ids)` capability: a **Copy link** item in the context menu for
+  the selection, and on read-only canvases a right-click menu offering Copy
+  link for the node under the cursor.
+- `focus` prop: node ids to frame on first load instead of fitting the whole
+  canvas. Missing ids fall back to fit-all and report through `notify`.
+
 ## [0.4.0] — 2026-10-08
 
 Video nodes.

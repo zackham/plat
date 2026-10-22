@@ -12,6 +12,7 @@ interface PlatHost {
   uploadAsset?(blob: Blob, name?: string): Promise<{ src: string }>
   measures?: MeasureSource
   share?(): Promise<{ url: string }>
+  linkTo?(ids: string[]): string
   notify?(kind: "success" | "error", message: string): void
 }
 ```
@@ -32,6 +33,7 @@ Optional members are capabilities; omitting one removes its UI:
 | `measures.refresh` | no per-measure refresh button |
 | `measures.list` | no insert-measure picker |
 | `share` | no share button |
+| `linkTo` | no "Copy link" in the context menu |
 | `notify` | errors go to `console.error` |
 
 A read-only public share is just a host with `loadDoc` + `measures.get` and
@@ -54,6 +56,13 @@ nothing else. The full editor and the share viewer are the same component.
   and `hasAudio` (`UploadedAsset`): a host that transcodes should, since its
   output can differ from the original file. Anything omitted is read from
   the file in the browser; without `hasAudio` a clip defaults to click-to-play.
+- **`linkTo`**: return a URL that reopens this canvas on the given node ids
+  (frames, nodes, or a multi-selection). When it is opened, mount
+  `<Plat focus={ids}>`: the first fit frames those nodes (at most 1:1)
+  instead of the whole canvas. Ids are stable, so links survive
+  rearrangement; if none of them still exist the canvas fits as usual and
+  `notify` gets an error. Copy link also works on a read-only canvas, where
+  right-clicking a node offers it alone.
 - **`measures.refresh`**: recompute, then return the fresh `MeasureData`
   (the library keeps the stale value visible while it runs).
 

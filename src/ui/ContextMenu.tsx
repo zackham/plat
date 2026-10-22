@@ -13,6 +13,8 @@ export interface ContextActions {
   remove: () => void
   copyPng: () => void
   download: () => void
+  /** present only when the host implements `linkTo` */
+  copyLink?: (ids: string[]) => void
 }
 
 export function ContextMenu({
@@ -20,11 +22,15 @@ export function ContextMenu({
   pos,
   onClose,
   actions,
+  linkTargets,
 }: {
   store: PlatStore
   pos: { x: number; y: number }
   onClose: () => void
   actions: ContextActions
+  /** read-only canvas: no selection exists, so the menu acts on these ids and
+   *  offers nothing but Copy link */
+  linkTargets?: string[]
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [clamped, setClamped] = useState(pos)
@@ -65,6 +71,20 @@ export function ContextMenu({
     fn()
     onClose()
   }
+  const copyLink = actions.copyLink
+
+  if (linkTargets) {
+    return (
+      <div
+        ref={ref}
+        className="plat-cmenu"
+        style={{ left: clamped.x, top: clamped.y }}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        {copyLink && <Item label="Copy link" onClick={run(() => copyLink(linkTargets))} />}
+      </div>
+    )
+  }
 
   return (
     <div
@@ -79,6 +99,7 @@ export function ContextMenu({
       <Item label="Duplicate" hint="⌘D" disabled={!hasSel} onClick={run(actions.duplicate)} />
       <Sep />
       <Item label="Copy as PNG" disabled={!hasSel} onClick={run(actions.copyPng)} />
+      {copyLink && <Item label="Copy link" disabled={!hasSel} onClick={run(() => copyLink(sel))} />}
       {canDl && <Item label="Download original" onClick={run(actions.download)} />}
       <Sep />
       {frameable && <Item label="Frame selection" hint="⌘⌥F" onClick={run(() => frameSelection(store))} />}

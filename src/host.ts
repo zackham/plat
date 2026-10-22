@@ -118,6 +118,10 @@ export interface PlatHost {
   measures?: MeasureSource
   /** Create (or reuse) a public share link for this canvas. */
   share?(): Promise<{ url: string }>
+  /** A URL that reopens this canvas framed on `ids` (stable node ids, so it
+   *  survives rearrangement). The host mounts `<Plat focus={ids}>` when it is
+   *  opened. Omit ⇒ no Copy link menu item. */
+  linkTo?(ids: string[]): string
   /** Surface a user-facing notification. Omit ⇒ errors go to console. */
   notify?(kind: "success" | "error", message: string): void
 }
